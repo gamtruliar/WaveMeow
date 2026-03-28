@@ -6,7 +6,6 @@
 const PITCH_MIN = 0.5, PITCH_MAX = 2.0;
 const VIBRATO_MIN = 0, VIBRATO_MAX = 50;
 const INFLECTION_MIN = -0.5, INFLECTION_MAX = 0.5;
-const LFO_FREQ = 6;
 const TOTAL_ROUNDS = 5;
 const DEFAULT_AUDIO = 'dragon-studio-cat-meow-401729.mp3';
 const VOL_KEY = 'wavemeow_vol';
@@ -14,14 +13,11 @@ const VOL_KEY = 'wavemeow_vol';
 /* ── Audio engine (non-reactive, module-level) ── */
 let audioCtx = null;
 let audioBuffer = null;
-let currentSource = null;
-let lfoNode = null;
-let lfoDepthNode = null;
+let pitchShifterNode = null;
 let masterGainNode = null;
 let listenInterval = null;
 let scoreRAF = null;
-let isLooping = false;
-let loopParams = null;
+let workletReady = false;
 
 function ensureCtx(vol) {
   if (!audioCtx) {
@@ -32,62 +28,41 @@ function ensureCtx(vol) {
   }
 }
 
+async function loadWorklet() {
+  if (workletReady) return;
+  await audioCtx.audioWorklet.addModule('pitch-shifter-worklet.js');
+  workletReady = true;
+}
+
 function stopAudio() {
-  isLooping = false;
-  loopParams = null;
-  if (lfoNode) { try { lfoNode.stop(); } catch (_) { /* */ } lfoNode = null; }
-  if (currentSource) { try { currentSource.stop(); } catch (_) { /* */ } currentSource = null; }
+  if (pitchShifterNode) {
+    pitchShifterNode.port.postMessage({ stop: true });
+    pitchShifterNode.disconnect();
+    pitchShifterNode = null;
+  }
 }
 
 function buildGraph(pitch, vibrato, inflection, loop) {
   stopAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  isLooping = loop;
-  loopParams = { pitch, vibrato, inflection };
-  startPlayback(pitch, vibrato, inflection);
+  startPlayback(pitch, vibrato, inflection, loop);
 }
 
-function startPlayback(pitch, vibrato, inflection) {
-  if (currentSource) { try { currentSource.stop(); } catch (_) { /* */ } currentSource = null; }
-  if (lfoNode) { try { lfoNode.stop(); } catch (_) { /* */ } lfoNode = null; }
+function startPlayback(pitch, vibrato, inflection, loop) {
+  stopAudio();
 
-  const src = audioCtx.createBufferSource();
-  src.buffer = audioBuffer;
-  src.loop = false;
+  /* Worklet reads directly from PCM — no BufferSourceNode needed */
+  pitchShifterNode = new AudioWorkletNode(audioCtx, 'pitch-shifter');
+  pitchShifterNode.connect(masterGainNode);
 
-  /* Pitch via detune — keeps playback speed constant */
-  const pitchCents = 1200 * Math.log2(pitch);
-  src.detune.value = pitchCents;
-
-  /* Inflection via playbackRate ramp (slide from neutral to target) */
-  const now = audioCtx.currentTime;
-  const dur = audioBuffer.duration;
-  src.playbackRate.setValueAtTime(1.0, now);
-  src.playbackRate.linearRampToValueAtTime(1.0 + inflection, now + dur);
-
-  /* Vibrato LFO (sine ~6 Hz) → GainNode (depth in cents) → source.detune */
-  lfoNode = audioCtx.createOscillator();
-  lfoNode.type = 'sine';
-  lfoNode.frequency.value = LFO_FREQ;
-
-  lfoDepthNode = audioCtx.createGain();
-  lfoDepthNode.gain.value = vibrato;
-
-  lfoNode.connect(lfoDepthNode);
-  lfoDepthNode.connect(src.detune);
-
-  src.connect(masterGainNode);
-
-  lfoNode.start();
-  src.start();
-  currentSource = src;
-  src.onended = () => {
-    if (currentSource === src && isLooping && loopParams) {
-      startPlayback(loopParams.pitch, loopParams.vibrato, loopParams.inflection);
-    } else if (currentSource === src) {
-      currentSource = null;
-    }
-  };
+  /* Send PCM + params; worklet generates audio from this buffer */
+  const pcm = audioBuffer.getChannelData(0);
+  pitchShifterNode.port.postMessage({
+    buffer: pcm,
+    pitch, inflection, vibratoCents: vibrato,
+    duration: audioBuffer.duration, loop: !!loop,
+    play: true, reset: true
+  });
 }
 
 /* ── Mapping helpers ── */
@@ -99,7 +74,7 @@ function vibratoToSlider(v)    { return Math.round((v - VIBRATO_MIN)    / (VIBRA
 function inflectionToSlider(i) { return Math.round((i - INFLECTION_MIN) / (INFLECTION_MAX - INFLECTION_MIN) * 1000); }
 
 function calcScore(target, player, min, max) {
-  return Math.max(0, 100 - (Math.abs(target - player) / (max - min) * 100));
+  return Math.max(0, 10 - (Math.abs(target - player) / (max - min) * 10));
 }
 
 /* ═══════════════════════════════════════════
@@ -128,7 +103,7 @@ PetiteVue.createApp({
   lastInflection: 0,
 
   roundScores: [],
-  scoreDisplay: '0%',
+  scoreDisplay: '0.00',
   scoreAnimating: false,
   roundResult: null,
   barPitch: '0%',
@@ -157,17 +132,17 @@ PetiteVue.createApp({
   get tgtVibratoPct()    { return (this.targetVibrato    - VIBRATO_MIN)    / (VIBRATO_MAX    - VIBRATO_MIN); },
   get tgtInflectionPct() { return (this.targetInflection - INFLECTION_MIN) / (INFLECTION_MAX - INFLECTION_MIN); },
 
-  get finalAvg() {
+  get finalTotal() {
     if (!this.roundScores.length) return 0;
-    return this.roundScores.reduce((s, r) => s + r.total, 0) / TOTAL_ROUNDS;
+    return this.roundScores.reduce((s, r) => s + r.total, 0);
   },
   get finalComment() {
-    const a = this.finalAvg;
-    if (a >= 95) return '"Tetrachromat of Sound!" 🎯';
-    if (a >= 85) return '"Cat Whisperer. Absolute unit." 😼';
-    if (a >= 70) return '"Pretty good ears, not gonna lie." 🎧';
-    if (a >= 50) return '"Decent. Keep practicing." 🐱';
-    if (a >= 30) return '"Are you sure you\'re listening?" 😐';
+    const a = this.finalTotal;
+    if (a >= 47.5) return '"Tetrachromat of Sound!" 🎯';
+    if (a >= 42.5) return '"Cat Whisperer. Absolute unit." 😼';
+    if (a >= 35) return '"Pretty good ears, not gonna lie." 🎧';
+    if (a >= 25) return '"Decent. Keep practicing." 🐱';
+    if (a >= 15) return '"Are you sure you\'re listening?" 😐';
     return '"Go wash your ears." 🚿';
   },
 
@@ -182,6 +157,7 @@ PetiteVue.createApp({
   /* ── Audio init ── */
   async loadDefaultAudio() {
     ensureCtx(this.masterVol);
+    await loadWorklet();
     try {
       const resp = await fetch(DEFAULT_AUDIO);
       if (!resp.ok) throw new Error('fetch failed');
@@ -200,6 +176,7 @@ PetiteVue.createApp({
     if (!file) return;
     this.fileName = file.name;
     ensureCtx(this.masterVol);
+    await loadWorklet();
     try {
       audioBuffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
       this.defaultStatus = '✓ Custom meow loaded: ' + file.name;
@@ -272,15 +249,11 @@ PetiteVue.createApp({
     const p   = sliderToPitch(this.sliderPitch);
     const v   = sliderToVibrato(this.sliderVibrato);
     const inf = sliderToInflection(this.sliderInflection);
-    if (loopParams) {
-      loopParams.pitch = p;
-      loopParams.vibrato = v;
-      loopParams.inflection = inf;
-    }
-    if (currentSource) {
-      /* Pitch & vibrato update in real-time; inflection applies next loop */
-      currentSource.detune.value = 1200 * Math.log2(p);
-      if (lfoDepthNode) lfoDepthNode.gain.value = v;
+    if (pitchShifterNode) {
+      /* Send updated params to worklet — no automation to cancel */
+      pitchShifterNode.port.postMessage({
+        pitch: p, inflection: inf, vibratoCents: v
+      });
     } else {
       ensureCtx(this.masterVol);
       buildGraph(p, v, inf, true);
@@ -322,9 +295,9 @@ PetiteVue.createApp({
     this.screen = 'round-score';
 
     setTimeout(() => {
-      this.barPitch      = result.pitch      + '%';
-      this.barVibrato    = result.vibrato    + '%';
-      this.barInflection = result.inflection + '%';
+      this.barPitch      = (result.pitch      / 10 * 100) + '%';
+      this.barVibrato    = (result.vibrato    / 10 * 100) + '%';
+      this.barInflection = (result.inflection / 10 * 100) + '%';
     }, 250);
 
     this.animateScore(result.total);
@@ -337,11 +310,11 @@ PetiteVue.createApp({
     const step = (now) => {
       const t = Math.min((now - t0) / dur, 1);
       const e = 1 - Math.pow(1 - t, 3);
-      this.scoreDisplay = (e * target).toFixed(2) + '%';
+      this.scoreDisplay = (e * target).toFixed(2) + ' / 10';
       if (t < 1) {
         scoreRAF = requestAnimationFrame(step);
       } else {
-        this.scoreDisplay = target.toFixed(2) + '%';
+        this.scoreDisplay = target.toFixed(2) + ' / 10';
         this.scoreAnimating = false;
       }
     };

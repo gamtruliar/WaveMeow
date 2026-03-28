@@ -178,24 +178,24 @@
       </div>
 
       <div class="score-big" :class="{ animating: scoreAnimating }">{{ scoreDisplay }}</div>
-      <div class="score-subtext">accuracy</div>
+      <div class="score-subtext">round score</div>
 
       <!-- Score bars -->
       <div class="score-bars">
         <div class="score-bar-row pitch-row">
           <div class="score-bar-lbl">Pitch</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barPitch }"></div></div>
-          <div class="score-bar-pct">{{ roundResult ? roundResult.pitch.toFixed(1) + '%' : '--' }}</div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.pitch.toFixed(1) + '/10' : '--' }}</div>
         </div>
         <div class="score-bar-row vibrato-row">
           <div class="score-bar-lbl">Vibrato</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barVibrato }"></div></div>
-          <div class="score-bar-pct">{{ roundResult ? roundResult.vibrato.toFixed(1) + '%' : '--' }}</div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.vibrato.toFixed(1) + '/10' : '--' }}</div>
         </div>
         <div class="score-bar-row inflection-row">
           <div class="score-bar-lbl">Inflection</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barInflection }"></div></div>
-          <div class="score-bar-pct">{{ roundResult ? roundResult.inflection.toFixed(1) + '%' : '--' }}</div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.inflection.toFixed(1) + '/10' : '--' }}</div>
         </div>
       </div>
 
@@ -272,7 +272,7 @@
       </div>
 
       <div class="final-score-wrap">
-        <div class="final-big">{{ finalAvg.toFixed(2) }}%</div>
+        <div class="final-big">{{ finalTotal.toFixed(2) }} / 50</div>
         <div class="final-comment" v-html="finalComment"></div>
       </div>
 
@@ -281,7 +281,7 @@
       <div class="history">
         <div class="history-row" v-for="(r, i) in roundScores" :key="i">
           <span class="hr-round">Round {{ i + 1 }}</span>
-          <span class="hr-val">{{ r.total.toFixed(2) }}%</span>
+          <span class="hr-val">{{ r.total.toFixed(2) }} / 10</span>
         </div>
       </div>
 
