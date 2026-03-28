@@ -4,355 +4,449 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sonic Palette: Meow Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0d0d0d;
-      --surface: #161616;
-      --border: #2a2a2a;
-      --text: #f0f0f0;
-      --muted: #555;
-      --neon-cyan: #00ffe0;
-      --neon-pink: #ff2d78;
-      --neon-yellow: #ffe600;
-      --neon-purple: #b56cff;
-      --neon-green: #39ff6e;
-      --slider-track: #222;
-      --slider-thumb: var(--neon-cyan);
+      --pink:    #ffb3cb;
+      --pink2:   #ff85a1;
+      --purple:  #c07bff;
+      --purple2: #a04fe0;
+      --blue:    #8ecfff;
+      --yellow:  #ffd97a;
+      --mint:    #7dffc4;
+      --cream:   #fff8f0;
+      --cream2:  #fff0e8;
+      --text:    #6b4c7a;
+      --muted:   #b09ac0;
+      --card-border: #f0c0d8;
+      --pitch-col:  #6ec6ff;
+      --timbre-col: #c07bff;
+      --grit-col:   #ffcd6b;
+      --green-neon: #39ff6e;
     }
 
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', Helvetica, Arial, sans-serif;
       min-height: 100vh;
+      background: linear-gradient(160deg, #ffd6e8 0%, #ffe8d6 30%, #e8d6ff 65%, #d6e8ff 100%);
+      font-family: 'Nunito', sans-serif;
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      justify-content: flex-start;
+      padding: 24px 16px 80px;
       overflow-x: hidden;
+      position: relative;
+    }
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 500px; height: 300px;
+      background: radial-gradient(circle, #ffd6f7, transparent);
+      top: -60px; left: -80px;
+    }
+    body::after {
+      width: 420px; height: 280px;
+      background: radial-gradient(circle, #d6e8ff, transparent);
+      bottom: -40px; right: -60px;
     }
 
+    /* ── Master Volume ── */
+    .master-vol {
+      position: fixed; bottom: 18px; right: 18px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px; border: 1.5px solid var(--card-border);
+      padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(192,123,255,0.15);
+    }
+    .master-vol-label {
+      font-size: 0.6rem; font-weight: 900; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    #master-vol-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 76px; height: 4px; border-radius: 2px;
+      background: linear-gradient(to right, var(--purple), var(--pink));
+      outline: none; cursor: pointer;
+    }
+    #master-vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; border: 2px solid var(--purple);
+      box-shadow: 0 0 6px rgba(192,123,255,0.5); cursor: pointer;
+    }
+    #master-vol-slider::-moz-range-thumb {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; border: 2px solid var(--purple); cursor: pointer;
+    }
+
+    /* ── Header ── */
+    .title-wrap { position: relative; z-index: 1; text-align: center; margin-bottom: 4px; }
     h1 {
-      font-size: clamp(1.4rem, 4vw, 2.2rem);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      color: var(--neon-cyan);
-      text-shadow: 0 0 28px rgba(0,255,224,0.45);
-      margin-bottom: 4px;
-      text-align: center;
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: clamp(2.4rem, 8vw, 3.6rem);
+      background: linear-gradient(135deg, #ff9ecb 0%, #c07bff 45%, #6ec6ff 85%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 2px 0 rgba(255,255,255,0.9)) drop-shadow(0 4px 10px rgba(192,123,255,0.3));
     }
-
     .subtitle {
-      font-size: 0.8rem;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 40px;
-      text-align: center;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--muted); margin-top: 2px;
+    }
+    .sparkles {
+      display: flex; gap: 6px; justify-content: center;
+      font-size: 1.1rem; margin: 8px 0 18px;
+      filter: drop-shadow(0 0 4px rgba(255,180,80,0.4));
     }
 
     /* ── Screens ── */
-    .screen { display: none; flex-direction: column; align-items: center; gap: 28px; width: 100%; max-width: 520px; }
+    .screen {
+      display: none; flex-direction: column; align-items: center;
+      gap: 20px; width: 100%; max-width: 500px; position: relative; z-index: 1;
+    }
     .screen.active { display: flex; }
 
-    /* ── Cards ── */
+    /* ── Round dots ── */
+    .round-indicator { display: flex; gap: 10px; justify-content: center; align-items: center; }
+    .round-dot { font-size: 1.3rem; transition: transform 0.25s, filter 0.25s; filter: grayscale(1) opacity(0.35); }
+    .round-dot.done   { filter: grayscale(0) opacity(0.7); }
+    .round-dot.active { filter: grayscale(0) opacity(1); transform: scale(1.4); }
+
+    /* ── Card ── */
     .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px 32px;
       width: 100%;
-    }
-
-    /* ── Round indicator ── */
-    .round-indicator {
-      display: flex; gap: 8px; justify-content: center;
-    }
-    .round-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--border); transition: background 0.3s;
-    }
-    .round-dot.done { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
-    .round-dot.active { background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
-
-    /* ── Upload Zone ── */
-    .upload-zone {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 40px 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      background: var(--cream);
+      border-radius: 28px;
+      border: 2.5px solid var(--card-border);
+      padding: 28px 28px 24px;
       position: relative;
+      box-shadow: 0 8px 40px rgba(192,123,255,0.13), 0 2px 0 rgba(255,255,255,0.9) inset;
     }
-    .upload-zone:hover { border-color: var(--neon-cyan); background: rgba(0,255,224,0.03); }
+    /* Cat ears */
+    .card::before, .card::after {
+      content: '';
+      position: absolute; top: -17px;
+      width: 36px; height: 36px;
+      background: var(--cream);
+      border: 2.5px solid var(--card-border);
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    }
+    .card::before { left: 30px;  transform: rotate(-8deg); }
+    .card::after  { right: 30px; transform: rotate(8deg); }
+    /* Lace ring */
+    .card-lace {
+      position: absolute; inset: -9px;
+      border-radius: 34px;
+      border: 3px dashed rgba(240,192,216,0.5);
+      pointer-events: none; z-index: -1;
+    }
+
+    /* Decorative stickers */
+    .deco {
+      position: absolute; pointer-events: none; font-size: 1.05rem;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.08));
+    }
+    .deco-tl  { top: 10px;  left: 10px;  transform: rotate(-15deg); }
+    .deco-tr  { top: 10px;  right: 10px; transform: rotate(12deg); }
+    .deco-bl  { bottom: 12px; left: 12px; transform: rotate(10deg); }
+    .deco-br  { bottom: 12px; right: 12px; transform: rotate(-8deg); }
+
+    /* ── Phase labels ── */
+    .phase-label {
+      font-size: 0.63rem; font-weight: 900; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    }
+    .phase-title {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 1.85rem;
+      background: linear-gradient(135deg, var(--pink2), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.1; margin-bottom: 2px;
+    }
+
+    /* ── Upload ── */
+    .upload-zone {
+      border: 2.5px dashed var(--card-border);
+      border-radius: 16px; padding: 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative; background: var(--cream2);
+    }
+    .upload-zone:hover { border-color: var(--purple); background: rgba(192,123,255,0.04); }
     .upload-zone input[type="file"] {
       position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
     }
-    .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
-    .upload-label { font-size: 0.95rem; color: var(--muted); }
-    .upload-label span { color: var(--neon-cyan); font-weight: 600; }
-    .file-name { font-size: 0.8rem; color: var(--neon-cyan); margin-top: 8px; min-height: 1.2em; }
+    .upload-icon { font-size: 1.9rem; margin-bottom: 6px; }
+    .upload-label { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+    .upload-label span { color: var(--purple); }
+    .file-name { font-size: 0.72rem; color: var(--purple); margin-top: 5px; min-height: 1.1em; font-weight: 700; }
+    #default-status {
+      font-size: 0.78rem; font-weight: 700;
+      text-align: center; min-height: 1.3em; margin-bottom: 14px; color: var(--muted);
+    }
 
     /* ── Buttons ── */
     .btn {
-      border: none; cursor: pointer; border-radius: 10px;
-      font-family: inherit; font-weight: 700; letter-spacing: 0.04em;
-      text-transform: uppercase; transition: all 0.2s; outline: none;
-      padding: 14px 32px; font-size: 0.9rem;
+      border: none; cursor: pointer; border-radius: 50px;
+      font-family: 'Nunito', sans-serif; font-weight: 800;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      transition: all 0.18s; outline: none;
+      padding: 13px 30px; font-size: 0.86rem;
     }
     .btn-primary {
-      background: var(--neon-cyan); color: #000;
-      box-shadow: 0 0 20px rgba(0,255,224,0.35);
+      background: linear-gradient(135deg, #ffb3cb 0%, #c07bff 50%, #8ecfff 100%);
+      background-size: 200% 200%; background-position: 0% 50%;
+      color: #fff; box-shadow: 0 4px 20px rgba(192,123,255,0.38);
     }
-    .btn-primary:hover { box-shadow: 0 0 36px rgba(0,255,224,0.6); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; transform: none; }
-    .btn-secondary {
-      background: transparent; color: var(--neon-cyan);
-      border: 1.5px solid var(--neon-cyan);
+    .btn-primary:hover { background-position: 100% 50%; box-shadow: 0 6px 28px rgba(192,123,255,0.55); transform: translateY(-2px); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn-alt {
+      background: rgba(255,255,255,0.85); color: var(--purple);
+      border: 2px solid var(--card-border);
+      box-shadow: 0 3px 12px rgba(192,123,255,0.1);
     }
-    .btn-secondary:hover { background: rgba(0,255,224,0.08); }
+    .btn-alt:hover { border-color: var(--purple); background: rgba(192,123,255,0.07); }
+    .btn-alt.playing { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 4px 18px rgba(192,123,255,0.45); }
+    .btn-alt:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green {
+      background: rgba(255,255,255,0.85); color: #28a84e;
+      border: 2px solid rgba(57,255,110,0.45);
+      box-shadow: 0 3px 12px rgba(57,255,110,0.08);
+    }
+    .btn-green:hover { border-color: var(--green-neon); background: rgba(57,255,110,0.07); }
+    .btn-green.playing { background: #39ff6e; color: #fff; border-color: #39ff6e; box-shadow: 0 4px 18px rgba(57,255,110,0.45); }
+    .btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-danger {
-      background: var(--neon-pink); color: #fff;
-      box-shadow: 0 0 20px rgba(255,45,120,0.35);
+      background: linear-gradient(135deg, #ff6bab, #c07bff);
+      color: #fff; box-shadow: 0 4px 20px rgba(255,107,171,0.38);
     }
-    .btn-danger:hover { box-shadow: 0 0 36px rgba(255,45,120,0.6); transform: translateY(-1px); }
+    .btn-danger:hover { box-shadow: 0 6px 28px rgba(255,107,171,0.55); transform: translateY(-2px); }
 
-    /* ── Phase label ── */
-    .phase-label {
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .phase-title {
-      font-size: 1.6rem; font-weight: 900; color: var(--text); line-height: 1.1;
-    }
-    .phase-title .highlight { color: var(--neon-pink); text-shadow: 0 0 20px rgba(255,45,120,0.5); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 
-    /* ── Pulse animation ── */
-    .pulse-wrap { display: flex; justify-content: center; padding: 12px 0; }
+    /* ── Pulse ── */
+    .pulse-wrap { display: flex; justify-content: center; padding: 10px 0; }
     .pulse {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,255,224,0.3) 0%, rgba(0,255,224,0) 70%);
-      border: 2px solid var(--neon-cyan);
-      box-shadow: 0 0 24px rgba(0,255,224,0.4);
-      animation: pulse-anim 1.2s ease-in-out infinite;
+      width: 68px; height: 68px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(192,123,255,0.22) 0%, transparent 70%);
+      border: 2.5px solid var(--purple);
+      box-shadow: 0 0 24px rgba(192,123,255,0.35);
+      animation: pulse-anim 1.3s ease-in-out infinite;
+      display: flex; align-items: center; justify-content: center; font-size: 1.9rem;
     }
     @keyframes pulse-anim {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.25); opacity: 0.55; }
+      0%,100% { transform: scale(1); box-shadow: 0 0 20px rgba(192,123,255,0.28); }
+      50%      { transform: scale(1.22); box-shadow: 0 0 44px rgba(192,123,255,0.55); }
     }
-    .pulse.idle { animation: none; opacity: 0.15; }
-
-    /* ── Countdown ── */
+    .pulse.idle { animation: none; opacity: 0.28; }
     .countdown {
-      font-size: 2.8rem; font-weight: 900; color: var(--neon-cyan);
-      text-shadow: 0 0 28px rgba(0,255,224,0.6);
-      text-align: center; min-height: 1.2em; font-variant-numeric: tabular-nums;
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 3.2rem; color: var(--purple);
+      text-align: center; min-height: 1.2em;
+      text-shadow: 0 0 20px rgba(192,123,255,0.38);
     }
+
+    /* ── Waveform ── */
+    .waveform { display: flex; gap: 4px; align-items: center; justify-content: center; height: 36px; margin: 6px 0; }
+    .waveform-bar {
+      width: 4px; border-radius: 2px; opacity: 0.18;
+      background: linear-gradient(to top, var(--pink2), var(--purple));
+    }
+    .waveform.playing .waveform-bar { opacity: 0.82; animation: wave 0.45s ease-in-out infinite alternate; }
+    .waveform-bar:nth-child(1){height:8px; animation-delay:0s}
+    .waveform-bar:nth-child(2){height:16px;animation-delay:.07s}
+    .waveform-bar:nth-child(3){height:26px;animation-delay:.14s}
+    .waveform-bar:nth-child(4){height:20px;animation-delay:.21s}
+    .waveform-bar:nth-child(5){height:12px;animation-delay:.28s}
+    .waveform-bar:nth-child(6){height:30px;animation-delay:.35s}
+    .waveform-bar:nth-child(7){height:18px;animation-delay:.42s}
+    .waveform-bar:nth-child(8){height:10px;animation-delay:.07s}
+    @keyframes wave { 0%{height:4px} 100%{height:28px} }
 
     /* ── Sliders ── */
-    .sliders-wrap { display: flex; flex-direction: column; gap: 28px; width: 100%; }
-    .slider-row { display: flex; flex-direction: column; gap: 10px; }
+    .sliders-wrap { display: flex; flex-direction: column; gap: 22px; width: 100%; }
+    .slider-row { display: flex; flex-direction: column; gap: 8px; }
     .slider-header { display: flex; justify-content: space-between; align-items: center; }
-    .slider-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
-    .slider-name.pitch-color   { color: var(--neon-cyan); }
-    .slider-name.timbre-color  { color: var(--neon-purple); }
-    .slider-name.echo-color     { color: var(--neon-yellow); }
-    .slider-hint { font-size: 0.7rem; color: var(--muted); }
+    .slider-name { font-size: 0.78rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+    .slider-name.pitch-color  { color: var(--pitch-col); }
+    .slider-name.timbre-color { color: var(--timbre-col); }
+    .slider-name.grit-color   { color: var(--grit-col); }
+    .slider-hint { font-size: 0.67rem; color: var(--muted); font-weight: 700; }
 
-    input[type="range"] {
+    .slider-track-wrap { position: relative; height: 30px; display: flex; align-items: center; }
+
+    input[type="range"].kawaii-slider {
       -webkit-appearance: none; appearance: none;
-      width: 100%; height: 6px; border-radius: 3px;
-      background: var(--slider-track); outline: none; cursor: pointer;
+      width: 100%; height: 8px; border-radius: 4px;
+      outline: none; cursor: pointer; position: relative; z-index: 1;
     }
-    input[type="range"].pitch-range::-webkit-slider-thumb   { --thumb-color: var(--neon-cyan); }
-    input[type="range"].timbre-range::-webkit-slider-thumb  { --thumb-color: var(--neon-purple); }
-    input[type="range"].echo-range::-webkit-slider-thumb    { --thumb-color: var(--neon-yellow); }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--thumb-color, var(--neon-cyan));
-      box-shadow: 0 0 10px var(--thumb-color, var(--neon-cyan));
-      cursor: grab; border: 2px solid #000;
-      transition: box-shadow 0.15s;
+    input[type="range"].kawaii-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: transparent; border: none; cursor: grab;
     }
-    input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; box-shadow: 0 0 22px var(--thumb-color, var(--neon-cyan)); }
-
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 6px; border-radius: 3px;
+    input[type="range"].kawaii-slider::-webkit-slider-thumb:active { cursor: grabbing; }
+    input[type="range"].kawaii-slider::-moz-range-thumb {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: transparent; border: none; cursor: grab;
     }
+    input#slider-pitch.kawaii-slider,  input#cmp-pitch.kawaii-slider  { background: linear-gradient(to right, #b8e4ff, var(--pitch-col)); }
+    input#slider-timbre.kawaii-slider, input#cmp-timbre.kawaii-slider { background: linear-gradient(to right, #e0b8ff, var(--timbre-col)); }
+    input#slider-grit.kawaii-slider,   input#cmp-grit.kawaii-slider   { background: linear-gradient(to right, #fff0b8, var(--grit-col)); }
 
-    /* Firefox */
-    input[type="range"].pitch-range::-moz-range-thumb   { background: var(--neon-cyan);   box-shadow: 0 0 10px var(--neon-cyan); }
-    input[type="range"].timbre-range::-moz-range-thumb  { background: var(--neon-purple);  box-shadow: 0 0 10px var(--neon-purple); }
-    input[type="range"].echo-range::-moz-range-thumb    { background: var(--neon-yellow);  box-shadow: 0 0 10px var(--neon-yellow); }
-    input[type="range"]::-moz-range-thumb {
-      width: 20px; height: 20px; border-radius: 50%; border: 2px solid #000; cursor: grab;
-    }
-    input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--slider-track); }
-
-    /* ── Score display ── */
-    .score-big {
-      font-size: 4rem; font-weight: 900; text-align: center;
-      color: var(--neon-cyan); text-shadow: 0 0 32px rgba(0,255,224,0.5);
+    .emoji-thumb {
+      position: absolute;
+      top: 50%; transform: translate(-50%, -50%);
+      font-size: 1.55rem; pointer-events: none; z-index: 3;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
       line-height: 1;
     }
-    .score-subtext { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 6px; }
 
-    .breakdown { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
-    .breakdown-item { text-align: center; }
-    .breakdown-val { font-size: 1.1rem; font-weight: 700; }
-    .breakdown-lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
-    .breakdown-item.pitch-color .breakdown-val  { color: var(--neon-cyan); }
-    .breakdown-item.timbre-color .breakdown-val { color: var(--neon-purple); }
-    .breakdown-item.echo-color .breakdown-val   { color: var(--neon-yellow); }
-
-    /* ── Final score ── */
-    .final-score-wrap { text-align: center; }
-    .final-big {
-      font-size: 5.5rem; font-weight: 900; line-height: 1;
-      color: var(--neon-cyan); text-shadow: 0 0 48px rgba(0,255,224,0.6);
+    /* ── Score ── */
+    .score-big {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 4.5rem; text-align: center; line-height: 1;
+      background: linear-gradient(135deg, var(--pink2), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 2px 8px rgba(192,123,255,0.28));
     }
-    .final-comment {
-      font-size: 1.1rem; font-weight: 700; color: var(--text);
-      margin-top: 12px; text-align: center; line-height: 1.4;
+    .score-big.animating {
+      background: linear-gradient(135deg, #ff6bab, #ffd97a);
+      -webkit-background-clip: text; background-clip: text;
     }
+    .score-subtext { font-size: 0.73rem; color: var(--muted); text-align: center; margin-top: 4px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
 
-    /* ── History list ── */
-    .history { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-    .history-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.03);
-      font-size: 0.82rem;
+    .score-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+    .score-bar-row { display: flex; align-items: center; gap: 10px; }
+    .score-bar-lbl { font-size: 0.63rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; width: 52px; flex-shrink: 0; }
+    .score-bar-track { flex: 1; height: 7px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 0.85s cubic-bezier(0.22,1,0.36,1); }
+    .score-bar-pct { font-size: 0.7rem; font-weight: 800; width: 42px; text-align: right; flex-shrink: 0; }
+    .score-bar-row.pitch-color  .score-bar-lbl,
+    .score-bar-row.pitch-color  .score-bar-pct { color: var(--pitch-col); }
+    .score-bar-row.timbre-color .score-bar-lbl,
+    .score-bar-row.timbre-color .score-bar-pct { color: var(--timbre-col); }
+    .score-bar-row.grit-color   .score-bar-lbl,
+    .score-bar-row.grit-color   .score-bar-pct { color: var(--grit-col); }
+    .score-bar-row.pitch-color  .score-bar-fill { background: linear-gradient(to right, #b8e4ff, var(--pitch-col)); }
+    .score-bar-row.timbre-color .score-bar-fill { background: linear-gradient(to right, #e0b8ff, var(--timbre-col)); }
+    .score-bar-row.grit-color   .score-bar-fill { background: linear-gradient(to right, #fff0b8, var(--grit-col)); }
+
+    /* ── Compare sliders ── */
+    .compare-section-label {
+      font-size: 0.6rem; font-weight: 900; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted); margin: 16px 0 10px;
     }
-    .history-row .hr-round { color: var(--muted); }
-    .history-row .hr-val   { font-weight: 700; color: var(--neon-cyan); }
-
-    /* ── Waveform bars (decorative) ── */
-    .waveform { display: flex; gap: 3px; align-items: center; justify-content: center; height: 32px; }
-    .waveform-bar {
-      width: 3px; border-radius: 2px; background: var(--neon-cyan);
-      opacity: 0.15; transition: height 0.1s ease;
-    }
-    .waveform.playing .waveform-bar { opacity: 0.75; animation: wave 0.5s ease-in-out infinite alternate; }
-    .waveform-bar:nth-child(1) { animation-delay: 0s;    height: 8px;  }
-    .waveform-bar:nth-child(2) { animation-delay: 0.07s; height: 16px; }
-    .waveform-bar:nth-child(3) { animation-delay: 0.14s; height: 24px; }
-    .waveform-bar:nth-child(4) { animation-delay: 0.21s; height: 20px; }
-    .waveform-bar:nth-child(5) { animation-delay: 0.28s; height: 12px; }
-    .waveform-bar:nth-child(6) { animation-delay: 0.35s; height: 28px; }
-    .waveform-bar:nth-child(7) { animation-delay: 0.42s; height: 18px; }
-    .waveform-bar:nth-child(8) { animation-delay: 0.07s; height: 10px; }
-    @keyframes wave {
-      0%   { height: 4px; }
-      100% { height: 28px; }
-    }
-
-    .divider { width: 100%; height: 1px; background: var(--border); }
-
-    /* ── Compare sliders (score screen) ── */
-    .compare-rows { display: flex; flex-direction: column; gap: 22px; width: 100%; margin-top: 16px; }
-    .compare-row { display: flex; flex-direction: column; gap: 8px; }
+    .compare-rows { display: flex; flex-direction: column; gap: 16px; }
+    .compare-row { display: flex; flex-direction: column; gap: 6px; }
     .compare-label { display: flex; justify-content: space-between; align-items: center; }
-    .compare-tags { display: flex; gap: 10px; }
+    .compare-tags { display: flex; gap: 6px; }
     .compare-tag {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+      font-size: 0.57rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
     }
-    .compare-tag.you    { background: rgba(0,255,224,0.15); color: var(--neon-cyan); }
-    .compare-tag.target { background: rgba(57,255,110,0.15); color: var(--neon-green); }
-    .compare-track-wrap { position: relative; }
+    .compare-tag.you    { background: rgba(110,198,255,0.15); color: var(--pitch-col); border: 1px solid var(--pitch-col); }
+    .compare-tag.target { background: rgba(57,255,110,0.12); color: #28a84e; border: 1px solid var(--green-neon); }
+    .compare-track-wrap { position: relative; height: 30px; display: flex; align-items: center; }
     .compare-track-wrap input[type="range"] { pointer-events: none; }
     .target-marker {
       position: absolute;
       top: 50%; transform: translate(-50%, -50%);
-      width: 4px; height: 22px;
-      background: var(--neon-green);
-      border-radius: 2px;
-      box-shadow: 0 0 10px var(--neon-green), 0 0 4px #fff;
-      pointer-events: none;
+      width: 5px; height: 24px;
+      background: var(--green-neon);
+      border-radius: 3px;
+      box-shadow: 0 0 10px var(--green-neon), 0 0 4px #fff;
+      pointer-events: none; z-index: 4;
     }
+    .compare-play-row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
 
-    /* ── Compare button ── */
-    .compare-btn-wrap { display: flex; justify-content: center; margin-top: 4px; }
-    .btn-compare {
-      background: transparent;
-      border: 1.5px solid var(--neon-green);
-      color: var(--neon-green);
-      border-radius: 10px;
-      font-family: inherit; font-weight: 700;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      padding: 11px 28px; font-size: 0.82rem;
-      cursor: pointer; user-select: none;
-      transition: background 0.15s, box-shadow 0.15s;
-      -webkit-user-select: none;
+    /* ── Divider ── */
+    .divider { width: 100%; height: 1.5px; background: var(--card-border); border-radius: 1px; }
+
+    /* ── Final ── */
+    .final-score-wrap { text-align: center; }
+    .final-big {
+      font-family: 'Bubblegum Sans', cursive;
+      font-size: 5.5rem; line-height: 1;
+      background: linear-gradient(135deg, var(--pink2), var(--purple), var(--blue));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      filter: drop-shadow(0 3px 12px rgba(192,123,255,0.38));
     }
-    .btn-compare:active,
-    .btn-compare.pressing {
-      background: rgba(57,255,110,0.12);
-      box-shadow: 0 0 18px rgba(57,255,110,0.5);
+    .final-comment { font-size: 1rem; font-weight: 800; color: var(--text); margin-top: 10px; line-height: 1.5; }
+    .history { display: flex; flex-direction: column; gap: 7px; width: 100%; margin-top: 4px; }
+    .history-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 7px 12px; border-radius: 12px;
+      background: rgba(192,123,255,0.06); border: 1px solid var(--card-border);
+      font-size: 0.82rem;
     }
-    .compare-hint { font-size: 0.68rem; color: var(--muted); text-align: center; margin-top: 6px; }
-
-    /* ── Score count-up ── */
-    .score-big.animating { color: var(--neon-pink); text-shadow: 0 0 32px rgba(255,45,120,0.5); }
-
-    /* ── Score bar ── */
-    .score-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
-    .score-bar-row { display: flex; align-items: center; gap: 10px; }
-    .score-bar-lbl { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; width: 48px; flex-shrink: 0; }
-    .score-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .score-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 0.8s cubic-bezier(0.22,1,0.36,1); }
-    .score-bar-row.pitch-color  .score-bar-lbl { color: var(--neon-cyan); }
-    .score-bar-row.timbre-color .score-bar-lbl { color: var(--neon-purple); }
-    .score-bar-row.echo-color   .score-bar-lbl { color: var(--neon-yellow); }
-    .score-bar-row.pitch-color  .score-bar-fill { background: var(--neon-cyan); }
-    .score-bar-row.timbre-color .score-bar-fill { background: var(--neon-purple); }
-    .score-bar-row.echo-color   .score-bar-fill { background: var(--neon-yellow); }
-    .score-bar-pct { font-size: 0.7rem; font-weight: 700; width: 40px; text-align: right; flex-shrink: 0; }
-    .score-bar-row.pitch-color  .score-bar-pct { color: var(--neon-cyan); }
-    .score-bar-row.timbre-color .score-bar-pct { color: var(--neon-purple); }
-    .score-bar-row.echo-color   .score-bar-pct { color: var(--neon-yellow); }
+    .history-row .hr-round { color: var(--muted); font-weight: 700; }
+    .history-row .hr-val   { font-weight: 800; color: var(--purple); }
   </style>
 </head>
 <body>
 
-  <h1>Sonic Palette</h1>
-  <p class="subtitle">Meow Edition &nbsp;·&nbsp; Can You Tune It?</p>
+  <!-- Master Volume -->
+  <div class="master-vol">
+    <span style="font-size:1rem">🔊</span>
+    <span class="master-vol-label">Vol</span>
+    <input type="range" id="master-vol-slider" min="0" max="100" value="70" step="1" />
+  </div>
 
-  <!-- ═══════════════ SCREEN: INIT ═══════════════ -->
+  <!-- Header -->
+  <div class="title-wrap">
+    <h1>Sonic Palette</h1>
+    <p class="subtitle">Meow Edition &nbsp;·&nbsp; Can You Tune It?</p>
+    <div class="sparkles">✦ ✧ ✦ 🐱 ✦ ✧ ✦</div>
+  </div>
+
+  <!-- ═══ INIT ═══ -->
   <div class="screen active" id="screen-init">
     <div class="card">
+      <div class="card-lace"></div>
+      <span class="deco deco-tl">🌸</span>
+      <span class="deco deco-tr">✨</span>
+      <span class="deco deco-bl">🐾</span>
+      <span class="deco deco-br">🎵</span>
       <div class="phase-label">Initialize</div>
-      <div class="phase-title" style="margin-bottom:20px">Ready to <span class="highlight">Meow?</span></div>
-      <div id="default-status" style="font-size:0.82rem;color:var(--muted);text-align:center;margin-bottom:18px;min-height:1.4em;">Loading default meow…</div>
-      <div class="upload-zone" id="upload-zone" style="padding:22px 24px;">
+      <div class="phase-title">Ready to Meow?</div>
+      <div id="default-status" style="margin-top:12px">Loading default meow…</div>
+      <div class="upload-zone">
         <input type="file" id="file-input" accept="audio/*" />
-        <div class="upload-icon" style="font-size:1.8rem;margin-bottom:8px">🐾</div>
-        <div class="upload-label" style="font-size:0.8rem">(Optional) Upload a custom meow — <span>browse</span></div>
+        <div class="upload-icon">🐾</div>
+        <div class="upload-label">(Optional) Upload a custom meow — <span>browse</span></div>
         <div class="file-name" id="file-name"></div>
       </div>
     </div>
-    <button class="btn btn-primary" id="btn-start" disabled>Start Game</button>
+    <button class="btn btn-primary" id="btn-start" disabled>Start Game ✨</button>
   </div>
 
-  <!-- ═══════════════ SCREEN: LISTEN ═══════════════ -->
+  <!-- ═══ LISTEN ═══ -->
   <div class="screen" id="screen-listen">
     <div class="round-indicator" id="round-dots-listen"></div>
     <div class="card">
+      <div class="card-lace"></div>
+      <span class="deco deco-tl">🌟</span>
+      <span class="deco deco-tr">💫</span>
       <div class="phase-label">Round <span id="listen-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 1</div>
-      <div class="phase-title">Listen to the <span class="highlight">Target</span></div>
-      <div style="margin-top:20px">
-        <div class="pulse-wrap"><div class="pulse" id="listen-pulse"></div></div>
-        <div class="countdown" id="listen-countdown">5</div>
-
+      <div class="phase-title">Listen to the Target</div>
+      <div style="margin-top:14px;text-align:center">
+        <div class="pulse-wrap"><div class="pulse" id="listen-pulse">🐱</div></div>
+        <div class="countdown" id="listen-countdown">–</div>
         <div class="waveform" id="listen-waveform">
           <div class="waveform-bar"></div><div class="waveform-bar"></div>
           <div class="waveform-bar"></div><div class="waveform-bar"></div>
@@ -363,63 +457,75 @@
     </div>
   </div>
 
-  <!-- ═══════════════ SCREEN: TUNE ═══════════════ -->
+  <!-- ═══ TUNE ═══ -->
   <div class="screen" id="screen-tune">
     <div class="round-indicator" id="round-dots-tune"></div>
     <div class="card">
+      <div class="card-lace"></div>
+      <span class="deco deco-tl">💜</span>
+      <span class="deco deco-tr">🎵</span>
+      <span class="deco deco-bl">🌸</span>
+      <span class="deco deco-br">🐾</span>
       <div class="phase-label">Round <span id="tune-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 2</div>
-      <div class="phase-title">Tune to <span class="highlight">Match</span></div>
-
-      <div style="margin-top:20px">
-        <div class="waveform" id="tune-waveform">
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-        </div>
+      <div class="phase-title">Tune to Match</div>
+      <div class="waveform" id="tune-waveform" style="margin:10px 0">
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
       </div>
-
-      <div class="divider" style="margin:20px 0"></div>
-
+      <div class="divider" style="margin:12px 0 18px"></div>
       <div class="sliders-wrap">
         <div class="slider-row">
           <div class="slider-header">
             <span class="slider-name pitch-color">Pitch</span>
-            <span class="slider-hint">Low ←→ High</span>
+            <span class="slider-hint">Low — High</span>
           </div>
-          <input type="range" class="pitch-range" id="slider-pitch"
-                 min="0" max="1000" value="500" step="1" />
+          <div class="slider-track-wrap">
+            <input type="range" class="kawaii-slider" id="slider-pitch" min="0" max="1000" value="500" step="1" />
+            <div class="emoji-thumb" id="thumb-pitch">☁️</div>
+          </div>
         </div>
         <div class="slider-row">
           <div class="slider-header">
             <span class="slider-name timbre-color">Timbre</span>
-            <span class="slider-hint">Chunky ←→ Tiny</span>
+            <span class="slider-hint">Chunky · Tiny</span>
           </div>
-          <input type="range" class="timbre-range" id="slider-timbre"
-                 min="0" max="1000" value="500" step="1" />
+          <div class="slider-track-wrap">
+            <input type="range" class="kawaii-slider" id="slider-timbre" min="0" max="1000" value="500" step="1" />
+            <div class="emoji-thumb" id="thumb-timbre">🩷</div>
+          </div>
         </div>
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name echo-color">Echo</span>
-            <span class="slider-hint">Dry ←→ Reverb</span>
+            <span class="slider-name grit-color">Grit</span>
+            <span class="slider-hint">Pure — Raspy</span>
           </div>
-          <input type="range" class="echo-range" id="slider-echo"
-                 min="0" max="1000" value="500" step="1" />
+          <div class="slider-track-wrap">
+            <input type="range" class="kawaii-slider" id="slider-grit" min="0" max="1000" value="500" step="1" />
+            <div class="emoji-thumb" id="thumb-grit">🐾</div>
+          </div>
         </div>
       </div>
+      <div class="divider" style="margin:18px 0 12px"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-confirm">Confirm ✓</button>
+      </div>
     </div>
-    <button class="btn btn-primary" id="btn-confirm">Confirm</button>
   </div>
 
-  <!-- ═══════════════ SCREEN: ROUND SCORE ═══════════════ -->
+  <!-- ═══ ROUND SCORE ═══ -->
   <div class="screen" id="screen-round-score">
     <div class="round-indicator" id="round-dots-score"></div>
     <div class="card">
+      <div class="card-lace"></div>
+      <span class="deco deco-tl">⭐</span>
+      <span class="deco deco-tr">🌟</span>
+      <span class="deco deco-br">✨</span>
       <div class="phase-label">Round <span id="score-round-num">1</span> Result</div>
       <div class="score-big" id="round-score-val">0%</div>
       <div class="score-subtext">Accuracy</div>
-
-      <div class="score-bars" style="margin-top:14px">
+      <div class="score-bars">
         <div class="score-bar-row pitch-color">
           <span class="score-bar-lbl">Pitch</span>
           <div class="score-bar-track"><div class="score-bar-fill" id="bar-pitch"></div></div>
@@ -430,271 +536,249 @@
           <div class="score-bar-track"><div class="score-bar-fill" id="bar-timbre"></div></div>
           <span class="score-bar-pct" id="bd-timbre">--</span>
         </div>
-        <div class="score-bar-row echo-color">
-          <span class="score-bar-lbl">Echo</span>
-          <div class="score-bar-track"><div class="score-bar-fill" id="bar-echo"></div></div>
-          <span class="score-bar-pct" id="bd-echo">--</span>
+        <div class="score-bar-row grit-color">
+          <span class="score-bar-lbl">Grit</span>
+          <div class="score-bar-track"><div class="score-bar-fill" id="bar-grit"></div></div>
+          <span class="score-bar-pct" id="bd-grit">--</span>
         </div>
       </div>
-
-      <div class="divider" style="margin:20px 0"></div>
-
-      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Slider Comparison</div>
+      <div class="divider" style="margin:16px 0 4px"></div>
+      <div class="compare-section-label">Slider Comparison</div>
       <div class="compare-rows">
         <div class="compare-row">
           <div class="compare-label">
             <span class="slider-name pitch-color">Pitch</span>
-            <div class="compare-tags">
-              <span class="compare-tag you">You</span>
-              <span class="compare-tag target">Target</span>
-            </div>
+            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="pitch-range" id="cmp-pitch" min="0" max="1000" value="500" />
+            <input type="range" class="kawaii-slider" id="cmp-pitch" min="0" max="1000" value="500" />
+            <div class="emoji-thumb" id="cmp-thumb-pitch">☁️</div>
             <div class="target-marker" id="tgt-pitch"></div>
           </div>
         </div>
         <div class="compare-row">
           <div class="compare-label">
             <span class="slider-name timbre-color">Timbre</span>
-            <div class="compare-tags">
-              <span class="compare-tag you">You</span>
-              <span class="compare-tag target">Target</span>
-            </div>
+            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="timbre-range" id="cmp-timbre" min="0" max="1000" value="500" />
+            <input type="range" class="kawaii-slider" id="cmp-timbre" min="0" max="1000" value="500" />
+            <div class="emoji-thumb" id="cmp-thumb-timbre">🩷</div>
             <div class="target-marker" id="tgt-timbre"></div>
           </div>
         </div>
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name echo-color">Echo</span>
-            <div class="compare-tags">
-              <span class="compare-tag you">You</span>
-              <span class="compare-tag target">Target</span>
-            </div>
+            <span class="slider-name grit-color">Grit</span>
+            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="echo-range" id="cmp-echo" min="0" max="1000" value="500" />
-            <div class="target-marker" id="tgt-echo"></div>
+            <input type="range" class="kawaii-slider" id="cmp-grit" min="0" max="1000" value="500" />
+            <div class="emoji-thumb" id="cmp-thumb-grit">🐾</div>
+            <div class="target-marker" id="tgt-grit"></div>
           </div>
         </div>
       </div>
-
-      <div class="compare-btn-wrap" style="margin-top:20px">
-        <button class="btn-compare" id="btn-compare">Hold: Target &nbsp;/&nbsp; Release: You</button>
+      <div class="compare-play-row">
+        <button class="btn btn-green" id="btn-play-target-score">🎯 Play Target</button>
+        <button class="btn btn-alt"   id="btn-play-yours-score">🎵 Play Your Tune</button>
       </div>
-      <div class="compare-hint">Press and hold to hear the target sound</div>
     </div>
-    <button class="btn btn-primary" id="btn-next-round">Next Round</button>
+    <button class="btn btn-primary" id="btn-next-round">Next Round →</button>
   </div>
 
-  <!-- ═══════════════ SCREEN: GAME OVER ═══════════════ -->
+  <!-- ═══ GAME OVER ═══ -->
   <div class="screen" id="screen-gameover">
     <div class="card">
+      <div class="card-lace"></div>
+      <span class="deco deco-tl">🏆</span>
+      <span class="deco deco-tr">🎉</span>
+      <span class="deco deco-bl">🐱</span>
+      <span class="deco deco-br">🌟</span>
       <div class="final-score-wrap">
         <div class="phase-label">Final Score</div>
         <div class="final-big" id="final-score-val">--</div>
         <div class="score-subtext">Average Accuracy</div>
         <div class="final-comment" id="final-comment"></div>
       </div>
-      <div class="divider" style="margin:20px 0"></div>
+      <div class="divider" style="margin:18px 0 12px"></div>
       <div class="history" id="history-list"></div>
     </div>
-    <button class="btn btn-danger" id="btn-play-again">Play Again</button>
+    <button class="btn btn-danger" id="btn-play-again">Play Again 🐾</button>
   </div>
 
 <script>
-/* ═══════════════════════════════════════════════
+/* ════════════════════════════════════
    CONSTANTS
-═══════════════════════════════════════════════ */
-const PITCH_MIN = 0.5, PITCH_MAX = 2.0;
-const TIMBRE_MIN = 300, TIMBRE_MAX = 3000;
-const ECHO_MIN = 0.0, ECHO_MAX = 0.8;
-const ECHO_DELAY = 0.3; // fixed delay time in seconds
+════════════════════════════════════ */
+const PITCH_MIN  = 0.5,  PITCH_MAX  = 2.0;
+const TIMBRE_MIN = 300,  TIMBRE_MAX = 3000;
+const GRIT_MIN   = 0,    GRIT_MAX   = 50;
 const TOTAL_ROUNDS = 5;
-const LISTEN_SECONDS = 5;
 const DEFAULT_AUDIO_URL = 'dragon-studio-cat-meow-401729.mp3';
 
-/* ═══════════════════════════════════════════════
+/* ════════════════════════════════════
    STATE
-═══════════════════════════════════════════════ */
-let audioCtx = null;
-let audioBuffer = null;
-let currentSource = null;
-let filterNode = null;
-let delayNode = null;
-let wetGainNode = null;
+════════════════════════════════════ */
+let audioCtx       = null;
+let audioBuffer    = null;
+let currentSource  = null;
+let filterNode     = null;
+let waveShaperNode = null;
+let masterGainNode = null;
 
-let targetPitch = 1, targetTimbre = 1500, targetEcho = 0.4;
-let lastPlayerPitch = 1, lastPlayerTimbre = 1500, lastPlayerEcho = 0.4;
+let targetPitch = 1, targetTimbre = 1500, targetGrit = 0;
+let lastPlayerPitch = 1, lastPlayerTimbre = 1500, lastPlayerGrit = 0;
 let currentRound = 0;
-let roundScores = [];
-let listenTimer = null;
+let roundScores  = [];
+let listenTimer  = null;
 let scoreCountUpRAF = null;
 
-/* ═══════════════════════════════════════════════
-   HELPERS: slider ↔ audio parameter mapping
-═══════════════════════════════════════════════ */
-function sliderToPitch(v)   { return PITCH_MIN  + (v / 1000) * (PITCH_MAX  - PITCH_MIN); }
-function sliderToTimbre(v)  { return TIMBRE_MIN + (v / 1000) * (TIMBRE_MAX - TIMBRE_MIN); }
-function sliderToEcho(v)    { return ECHO_MIN   + (v / 1000) * (ECHO_MAX   - ECHO_MIN); }
+/* ════════════════════════════ Distortion ════ */
+function makeDistortionCurve(amount) {
+  const n = 256, curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = amount === 0 ? x : (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
+  }
+  return curve;
+}
 
-function pitchToSlider(p)   { return Math.round((p - PITCH_MIN)  / (PITCH_MAX  - PITCH_MIN)  * 1000); }
-function timbreToSlider(t)  { return Math.round((t - TIMBRE_MIN) / (TIMBRE_MAX - TIMBRE_MIN) * 1000); }
-function echoToSlider(e)    { return Math.round((e - ECHO_MIN)   / (ECHO_MAX   - ECHO_MIN)   * 1000); }
+/* ════════════════════════════ Mapping ════ */
+function sliderToPitch(v)  { return PITCH_MIN  + (v/1000)*(PITCH_MAX  - PITCH_MIN); }
+function sliderToTimbre(v) { return TIMBRE_MIN + (v/1000)*(TIMBRE_MAX - TIMBRE_MIN); }
+function sliderToGrit(v)   { return GRIT_MIN   + (v/1000)*(GRIT_MAX   - GRIT_MIN); }
+function pitchToSlider(p)  { return Math.round((p - PITCH_MIN)  / (PITCH_MAX  - PITCH_MIN)  * 1000); }
+function timbreToSlider(t) { return Math.round((t - TIMBRE_MIN) / (TIMBRE_MAX - TIMBRE_MIN) * 1000); }
+function gritToSlider(g)   { return Math.round((g - GRIT_MIN)   / (GRIT_MAX   - GRIT_MIN)   * 1000); }
 
-/* ════ Screen management ════ */
+/* ════════════════════════════ Emoji thumbs ════ */
+function positionThumb(sliderId, thumbId) {
+  const slider = document.getElementById(sliderId);
+  const thumb  = document.getElementById(thumbId);
+  if (!slider || !thumb) return;
+  const pct = slider.value / slider.max;
+  const w   = slider.offsetWidth;
+  thumb.style.left = (pct * (w - 28) + 14) + 'px';
+}
+function positionAllThumbs() {
+  [['slider-pitch','thumb-pitch'],['slider-timbre','thumb-timbre'],['slider-grit','thumb-grit']].forEach(([s,t]) => positionThumb(s,t));
+}
+function positionCompareThumbs() {
+  [['cmp-pitch','cmp-thumb-pitch'],['cmp-timbre','cmp-thumb-timbre'],['cmp-grit','cmp-thumb-grit']].forEach(([s,t]) => positionThumb(s,t));
+}
+
+/* ════════════════════════════ Screen / Dots ════ */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+  requestAnimationFrame(() => { positionAllThumbs(); positionCompareThumbs(); });
 }
-
-/* ════ Round dots ════ */
 function renderDots(containerId) {
   const el = document.getElementById(containerId);
   el.innerHTML = '';
   for (let i = 0; i < TOTAL_ROUNDS; i++) {
     const d = document.createElement('div');
-    d.className = 'round-dot' +
-      (i < currentRound ? ' done' : i === currentRound ? ' active' : '');
+    d.className = 'round-dot' + (i < currentRound ? ' done' : i === currentRound ? ' active' : '');
+    d.textContent = i === currentRound ? '😺' : '⭐';
     el.appendChild(d);
   }
 }
 
-/* ════ Audio engine ════ */
+/* ════════════════════════════ Audio engine ════ */
 function ensureAudioContext() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
-
-function stopCurrent() {
-  if (currentSource) {
-    try { currentSource.stop(); } catch(_) {}
-    currentSource = null;
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGainNode = audioCtx.createGain();
+    masterGainNode.gain.value = +document.getElementById('master-vol-slider').value / 100;
+    masterGainNode.connect(audioCtx.destination);
   }
 }
-
-function buildGraph(pitch, timbre, echo) {
+function stopCurrent() {
+  if (currentSource) { try { currentSource.stop(); } catch(_) {} currentSource = null; }
+}
+function buildGraph(pitch, timbre, grit, loop = false) {
   stopCurrent();
   ensureAudioContext();
-
-  const source = audioCtx.createBufferSource();
-  source.buffer = audioBuffer;
-  source.loop = true;
-  source.playbackRate.value = pitch;
-
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const src = audioCtx.createBufferSource();
+  src.buffer = audioBuffer;
+  src.loop   = loop;
+  src.playbackRate.value = pitch;
   filterNode = audioCtx.createBiquadFilter();
-  filterNode.type = 'peaking';
-  filterNode.Q.value = 5;
-  filterNode.gain.value = 15;
-  filterNode.frequency.value = timbre;
-
-  // Dry path: filter → destination
-  const dryGain = audioCtx.createGain();
-  dryGain.gain.value = 1.0;
-
-  // Wet (echo) path: filter → delay → wetGain → destination
-  delayNode = audioCtx.createDelay();
-  delayNode.delayTime.value = ECHO_DELAY;
-  wetGainNode = audioCtx.createGain();
-  wetGainNode.gain.value = echo;
-
-  source.connect(filterNode);
-  filterNode.connect(dryGain);
-  dryGain.connect(audioCtx.destination);
-  filterNode.connect(delayNode);
-  delayNode.connect(wetGainNode);
-  wetGainNode.connect(audioCtx.destination);
-
-  source.start();
-  currentSource = source;
+  filterNode.type = 'peaking'; filterNode.Q.value = 5;
+  filterNode.gain.value = 15; filterNode.frequency.value = timbre;
+  waveShaperNode = audioCtx.createWaveShaper();
+  waveShaperNode.curve = makeDistortionCurve(grit);
+  waveShaperNode.oversample = '4x';
+  src.connect(filterNode);
+  filterNode.connect(waveShaperNode);
+  waveShaperNode.connect(masterGainNode);
+  src.start();
+  currentSource = src;
+  src.onended = () => { if (currentSource === src) currentSource = null; };
 }
+function playOnce(pitch, timbre, grit) { buildGraph(pitch, timbre, grit, false); }
 
-function applySliderValues() {
-  const pitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
-  const timbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const echo   = sliderToEcho(+document.getElementById('slider-echo').value);
-
-  if (currentSource) {
-    currentSource.playbackRate.value = pitch;
-    filterNode.frequency.value = timbre;
-    wetGainNode.gain.value = echo;
-  } else {
-    buildGraph(pitch, timbre, echo);
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   SCORING
-═══════════════════════════════════════════════ */
+/* ════════════════════════════ Scoring ════ */
 function calcScore(target, player, min, max) {
-  const raw = 100 - (Math.abs(target - player) / (max - min) * 100);
-  return Math.max(0, raw);
+  return Math.max(0, 100 - (Math.abs(target - player) / (max - min) * 100));
+}
+function computeRoundScore(pP, pT, pG) {
+  const ps = calcScore(targetPitch, pP, PITCH_MIN, PITCH_MAX);
+  const ts = calcScore(targetTimbre, pT, TIMBRE_MIN, TIMBRE_MAX);
+  const gs = calcScore(targetGrit, pG, GRIT_MIN, GRIT_MAX);
+  return { pitch: ps, timbre: ts, grit: gs, total: (ps + ts + gs) / 3 };
 }
 
-function computeRoundScore(pPitch, pTimbre, pEcho) {
-  const ps = calcScore(targetPitch,  pPitch,  PITCH_MIN,  PITCH_MAX);
-  const ts = calcScore(targetTimbre, pTimbre, TIMBRE_MIN, TIMBRE_MAX);
-  const es = calcScore(targetEcho,   pEcho,   ECHO_MIN,   ECHO_MAX);
-  const total = (ps + ts + es) / 3;
-  return { pitch: ps, timbre: ts, echo: es, total };
+/* ════════════════════════════ Count-up ════ */
+function animateScore(targetVal) {
+  if (scoreCountUpRAF) cancelAnimationFrame(scoreCountUpRAF);
+  const el = document.getElementById('round-score-val');
+  el.classList.add('animating');
+  const duration = 950, start = performance.now();
+  (function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const e = 1 - Math.pow(1 - t, 3);
+    el.textContent = (e * targetVal).toFixed(2) + '%';
+    if (t < 1) { scoreCountUpRAF = requestAnimationFrame(step); }
+    else { el.textContent = targetVal.toFixed(2) + '%'; el.classList.remove('animating'); }
+  })(start);
 }
 
-/* ═══════════════════════════════════════════════
-   GAME FLOW
-═══════════════════════════════════════════════ */
-function startGame() {
-  currentRound = 0;
-  roundScores = [];
-  startRound();
-}
+/* ════════════════════════════ Game flow ════ */
+function startGame() { currentRound = 0; roundScores = []; startRound(); }
 
 function startRound() {
-  // Generate random target values
   targetPitch  = PITCH_MIN  + Math.random() * (PITCH_MAX  - PITCH_MIN);
   targetTimbre = TIMBRE_MIN + Math.random() * (TIMBRE_MAX - TIMBRE_MIN);
-  targetEcho   = ECHO_MIN   + Math.random() * (ECHO_MAX   - ECHO_MIN);
-
-  // Reset + randomize sliders
-  const rnd = () => Math.floor(Math.random() * 1001);
-  document.getElementById('slider-pitch').value  = rnd();
-  document.getElementById('slider-timbre').value = rnd();
-  document.getElementById('slider-echo').value   = rnd();
-
-  renderDots('round-dots-listen');
-  renderDots('round-dots-tune');
-  renderDots('round-dots-score');
-
-  document.getElementById('listen-round-num').textContent = currentRound + 1;
-  document.getElementById('tune-round-num').textContent   = currentRound + 1;
-  document.getElementById('score-round-num').textContent  = currentRound + 1;
-
+  targetGrit   = GRIT_MIN   + Math.random() * (GRIT_MAX   - GRIT_MIN);
+  ['slider-pitch','slider-timbre','slider-grit'].forEach(id => { document.getElementById(id).value = 500; });
+  ['round-dots-listen','round-dots-tune','round-dots-score'].forEach(id => renderDots(id));
+  ['listen-round-num','tune-round-num','score-round-num'].forEach(id => {
+    document.getElementById(id).textContent = currentRound + 1;
+  });
   showScreen('listen');
   startListen();
 }
 
 function startListen() {
-  const pulse    = document.getElementById('listen-pulse');
-  const countdown = document.getElementById('listen-countdown');
-  const waveform = document.getElementById('listen-waveform');
-
+  const pulse = document.getElementById('listen-pulse');
+  const cdEl  = document.getElementById('listen-countdown');
+  const wf    = document.getElementById('listen-waveform');
   pulse.classList.remove('idle');
-  waveform.classList.add('playing');
-
-  buildGraph(targetPitch, targetTimbre, targetEcho);
-
-  let remaining = LISTEN_SECONDS;
-  countdown.textContent = remaining;
-
+  wf.classList.add('playing');
+  buildGraph(targetPitch, targetTimbre, targetGrit, true);
+  let remaining = 5;
+  cdEl.textContent = remaining;
   listenTimer = setInterval(() => {
     remaining--;
-    countdown.textContent = remaining;
+    cdEl.textContent = remaining > 0 ? remaining : '–';
     if (remaining <= 0) {
       clearInterval(listenTimer);
       stopCurrent();
+      wf.classList.remove('playing');
       pulse.classList.add('idle');
-      waveform.classList.remove('playing');
       startTune();
     }
   }, 1000);
@@ -702,235 +786,180 @@ function startListen() {
 
 function startTune() {
   showScreen('tune');
-  const waveform = document.getElementById('tune-waveform');
-  waveform.classList.add('playing');
-  applySliderValues();
+  positionAllThumbs();
+  const p = sliderToPitch(+document.getElementById('slider-pitch').value);
+  const t = sliderToTimbre(+document.getElementById('slider-timbre').value);
+  const g = sliderToGrit(+document.getElementById('slider-grit').value);
+  buildGraph(p, t, g, true);
+  document.getElementById('tune-waveform').classList.add('playing');
 }
 
-/* ════ Count-up animation ════ */
-function animateScore(targetVal, onDone) {
-  if (scoreCountUpRAF) cancelAnimationFrame(scoreCountUpRAF);
-  const el = document.getElementById('round-score-val');
-  el.classList.add('animating');
-  const duration = 900;
-  const start = performance.now();
-  function step(now) {
-    const t = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - t, 3);
-    const current = eased * targetVal;
-    el.textContent = current.toFixed(2) + '%';
-    if (t < 1) {
-      scoreCountUpRAF = requestAnimationFrame(step);
-    } else {
-      el.textContent = targetVal.toFixed(2) + '%';
-      el.classList.remove('animating');
-      if (onDone) onDone();
-    }
-  }
-  scoreCountUpRAF = requestAnimationFrame(step);
+function setTargetMarker(markerId, sliderVal, sliderId) {
+  const slider = document.getElementById(sliderId);
+  const marker = document.getElementById(markerId);
+  if (!slider || !marker) return;
+  marker.style.left = (sliderVal / 1000 * (slider.offsetWidth - 28) + 14) + 'px';
 }
 
 function confirmTune() {
   stopCurrent();
   document.getElementById('tune-waveform').classList.remove('playing');
-
-  const pPitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
-  const pTimbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const pEcho   = sliderToEcho(+document.getElementById('slider-echo').value);
-
-  lastPlayerPitch  = pPitch;
-  lastPlayerTimbre = pTimbre;
-  lastPlayerEcho   = pEcho;
-
-  const result = computeRoundScore(pPitch, pTimbre, pEcho);
+  const pP = sliderToPitch(+document.getElementById('slider-pitch').value);
+  const pT = sliderToTimbre(+document.getElementById('slider-timbre').value);
+  const pG = sliderToGrit(+document.getElementById('slider-grit').value);
+  lastPlayerPitch = pP; lastPlayerTimbre = pT; lastPlayerGrit = pG;
+  const result = computeRoundScore(pP, pT, pG);
   roundScores.push(result);
 
-  // ── Comparison sliders: set player position ──
-  const pPitchSlider  = pitchToSlider(pPitch);
-  const pTimbreSlider = timbreToSlider(pTimbre);
-  const pEchoSlider   = echoToSlider(pEcho);
-  document.getElementById('cmp-pitch').value  = pPitchSlider;
-  document.getElementById('cmp-timbre').value = pTimbreSlider;
-  document.getElementById('cmp-echo').value   = pEchoSlider;
+  document.getElementById('cmp-pitch').value  = pitchToSlider(pP);
+  document.getElementById('cmp-timbre').value = timbreToSlider(pT);
+  document.getElementById('cmp-grit').value   = gritToSlider(pG);
 
-  // ── Target ghost markers ──
-  const tPitchSlider  = pitchToSlider(targetPitch);
-  const tTimbreSlider = timbreToSlider(targetTimbre);
-  const tEchoSlider   = echoToSlider(targetEcho);
-  function setMarker(id, val) {
-    // Offset accounts for the thumb radius (~10px) on a full-width track
-    const pct = val / 1000;
-    document.getElementById(id).style.left = `calc(${pct * 100}% - ${(pct - 0.5) * 20}px)`;
-  }
-  // Use rAF to ensure layout is ready after showScreen
-  requestAnimationFrame(() => {
-    setMarker('tgt-pitch',  tPitchSlider);
-    setMarker('tgt-timbre', tTimbreSlider);
-    setMarker('tgt-echo',   tEchoSlider);
-  });
+  const btnNext = document.getElementById('btn-next-round');
+  btnNext.textContent = currentRound + 1 >= TOTAL_ROUNDS ? 'View Final Results 🏆' : 'Next Round →';
+  btnNext.className   = currentRound + 1 >= TOTAL_ROUNDS ? 'btn btn-danger' : 'btn btn-primary';
+  ['round-dots-score'].forEach(id => renderDots(id));
+  document.getElementById('score-round-num').textContent = currentRound + 1;
 
-  // ── Score bars ──
-  document.getElementById('bd-pitch').textContent   = result.pitch.toFixed(1) + '%';
-  document.getElementById('bd-timbre').textContent  = result.timbre.toFixed(1) + '%';
-  document.getElementById('bd-echo').textContent    = result.echo.toFixed(1) + '%';
-  // Animate bars after a short delay
+  ['bar-pitch','bar-timbre','bar-grit'].forEach(id => { document.getElementById(id).style.width = '0%'; });
+  document.getElementById('bd-pitch').textContent  = result.pitch.toFixed(1) + '%';
+  document.getElementById('bd-timbre').textContent = result.timbre.toFixed(1) + '%';
+  document.getElementById('bd-grit').textContent   = result.grit.toFixed(1) + '%';
+
+  resetPlayBtn('btn-play-target-score');
+  resetPlayBtn('btn-play-yours-score');
+
+  showScreen('round-score');
+
   setTimeout(() => {
     document.getElementById('bar-pitch').style.width  = result.pitch + '%';
     document.getElementById('bar-timbre').style.width = result.timbre + '%';
-    document.getElementById('bar-echo').style.width   = result.echo + '%';
-  }, 200);
+    document.getElementById('bar-grit').style.width   = result.grit + '%';
+  }, 250);
 
-  const btnNext = document.getElementById('btn-next-round');
-  if (currentRound + 1 >= TOTAL_ROUNDS) {
-    btnNext.textContent = 'View Final Results';
-    btnNext.className = 'btn btn-danger';
-  } else {
-    btnNext.textContent = 'Next Round';
-    btnNext.className = 'btn btn-primary';
-  }
+  requestAnimationFrame(() => {
+    positionCompareThumbs();
+    setTargetMarker('tgt-pitch',  pitchToSlider(targetPitch),  'cmp-pitch');
+    setTargetMarker('tgt-timbre', timbreToSlider(targetTimbre),'cmp-timbre');
+    setTargetMarker('tgt-grit',   gritToSlider(targetGrit),    'cmp-grit');
+  });
 
-  renderDots('round-dots-score');
-  showScreen('round-score');
-
-  // Reset bars to 0 before animation
-  document.getElementById('bar-pitch').style.width  = '0%';
-  document.getElementById('bar-timbre').style.width = '0%';
-  document.getElementById('bar-echo').style.width   = '0%';
-
-  // Start playing player sound, then count up score
-  buildGraph(lastPlayerPitch, lastPlayerTimbre, lastPlayerEcho);
   animateScore(result.total);
 }
 
-function nextRound() {
-  stopCurrent();
-  currentRound++;
-  if (currentRound >= TOTAL_ROUNDS) {
-    showGameOver();
-  } else {
-    startRound();
-  }
-}
+function nextRound() { stopCurrent(); currentRound++; if (currentRound >= TOTAL_ROUNDS) showGameOver(); else startRound(); }
 
 function showGameOver() {
   const avg = roundScores.reduce((a, b) => a + b.total, 0) / TOTAL_ROUNDS;
-
   document.getElementById('final-score-val').textContent = avg.toFixed(2) + '%';
-
-  let comment = '';
-  if (avg >= 95)      comment = '"Tetrachromat of Sound!" 🎯';
-  else if (avg >= 85) comment = '"Cat Whisperer. Absolute unit." 😼';
-  else if (avg >= 70) comment = '"Pretty good ears, not gonna lie." 🎧';
-  else if (avg >= 50) comment = '"Decent. Keep practicing." 🐱';
-  else if (avg >= 30) comment = '"Are you sure you\'re listening?" 😐';
-  else                comment = '"Go wash your ears." 🚿';
-  document.getElementById('final-comment').textContent = comment;
-
-  const historyEl = document.getElementById('history-list');
-  historyEl.innerHTML = '';
+  let c = '';
+  if      (avg >= 95) c = '"Tetrachromat of Sound!" 🎯';
+  else if (avg >= 85) c = '"Cat Whisperer. Absolute unit." 😼';
+  else if (avg >= 70) c = '"Pretty good ears, not gonna lie." 🎧';
+  else if (avg >= 50) c = '"Decent. Keep practicing." 🐱';
+  else if (avg >= 30) c = '"Are you sure you\'re listening?" 😐';
+  else                c = '"Go wash your ears." 🚿';
+  document.getElementById('final-comment').textContent = c;
+  const histEl = document.getElementById('history-list');
+  histEl.innerHTML = '';
   roundScores.forEach((r, i) => {
     const row = document.createElement('div');
     row.className = 'history-row';
-    row.innerHTML = `<span class="hr-round">Round ${i + 1}</span><span class="hr-val">${r.total.toFixed(2)}%</span>`;
-    historyEl.appendChild(row);
+    row.innerHTML = `<span class="hr-round">Round ${i+1}</span><span class="hr-val">${r.total.toFixed(2)}%</span>`;
+    histEl.appendChild(row);
   });
-
   showScreen('gameover');
 }
 
-function playAgain() {
+/* ════════════════════════════ Play buttons (score screen) ════ */
+function resetPlayBtn(id) {
+  const b = document.getElementById(id);
+  b.disabled = false; b.classList.remove('playing');
+}
+function handleScorePlay(btnId, otherBtnId, pitch, timbre, grit) {
+  const btn = document.getElementById(btnId), other = document.getElementById(otherBtnId);
+  if (btn.disabled) return;
   stopCurrent();
-  startGame();
+  btn.disabled = other.disabled = true;
+  btn.classList.add('playing');
+  playOnce(pitch, timbre, grit);
+  const ms = (audioBuffer ? audioBuffer.duration * 1000 : 2000) + 200;
+  setTimeout(() => { btn.disabled = other.disabled = false; btn.classList.remove('playing'); }, ms);
 }
 
-/* ═══════════════════════════════════════════════
-   DEFAULT AUDIO LOAD
-═══════════════════════════════════════════════ */
-async function loadDefaultAudio() {
-  const statusEl = document.getElementById('default-status');
-  ensureAudioContext();
-  try {
-    const resp = await fetch(DEFAULT_AUDIO_URL);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const arrayBuffer = await resp.arrayBuffer();
-    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-    statusEl.style.color = 'var(--neon-cyan)';
-    statusEl.textContent = '✓ Default meow loaded — or upload your own below';
-    document.getElementById('btn-start').disabled = false;
-  } catch(err) {
-    statusEl.style.color = 'var(--neon-pink)';
-    statusEl.textContent = '⚠ Could not load default audio. Please upload a meow file.';
-  }
-}
-
-/* ═══════════════════════════════════════════════
-   FILE UPLOAD (optional override)
-═══════════════════════════════════════════════ */
+/* ════════════════════════════ Events ════ */
 document.getElementById('file-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const file = e.target.files[0]; if (!file) return;
   document.getElementById('file-name').textContent = file.name;
-
   ensureAudioContext();
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-    document.getElementById('default-status').style.color = 'var(--neon-cyan)';
-    document.getElementById('default-status').textContent = '✓ Custom meow loaded: ' + file.name;
+    audioBuffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
+    const s = document.getElementById('default-status');
+    s.style.color = '#9c5cd4'; s.textContent = '✓ Custom meow loaded: ' + file.name;
     document.getElementById('btn-start').disabled = false;
-  } catch(err) {
-    document.getElementById('file-name').textContent = '⚠ Could not decode audio file.';
-  }
+  } catch { document.getElementById('file-name').textContent = '⚠ Could not decode audio.'; }
 });
 
-/* ═══════════════════════════════════════════════
-   SLIDER LIVE UPDATE
-═══════════════════════════════════════════════ */
-['slider-pitch', 'slider-timbre', 'slider-echo'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    applySliderValues();
-  });
+document.getElementById('master-vol-slider').addEventListener('input', (e) => {
+  if (masterGainNode) masterGainNode.gain.value = e.target.value / 100;
 });
 
-/* ═══════════════════════════════════════════════
-   BUTTON EVENTS
-═══════════════════════════════════════════════ */
 document.getElementById('btn-start').addEventListener('click', () => {
   ensureAudioContext();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   startGame();
 });
 
-// Auto-load default audio on page start
-loadDefaultAudio();
+['slider-pitch','slider-timbre','slider-grit'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    positionAllThumbs();
+    const p = sliderToPitch(+document.getElementById('slider-pitch').value);
+    const t = sliderToTimbre(+document.getElementById('slider-timbre').value);
+    const g = sliderToGrit(+document.getElementById('slider-grit').value);
+    if (currentSource) {
+      currentSource.playbackRate.value = p;
+      if (filterNode) filterNode.frequency.value = t;
+      if (waveShaperNode) waveShaperNode.curve = makeDistortionCurve(g);
+    } else {
+      buildGraph(p, t, g, true);
+    }
+    document.getElementById('tune-waveform').classList.add('playing');
+  });
+});
 
 document.getElementById('btn-confirm').addEventListener('click', confirmTune);
+
+document.getElementById('btn-play-target-score').addEventListener('click', () => {
+  handleScorePlay('btn-play-target-score','btn-play-yours-score', targetPitch, targetTimbre, targetGrit);
+});
+document.getElementById('btn-play-yours-score').addEventListener('click', () => {
+  handleScorePlay('btn-play-yours-score','btn-play-target-score', lastPlayerPitch, lastPlayerTimbre, lastPlayerGrit);
+});
+
 document.getElementById('btn-next-round').addEventListener('click', nextRound);
-document.getElementById('btn-play-again').addEventListener('click', playAgain);
+document.getElementById('btn-play-again').addEventListener('click', () => { stopCurrent(); startGame(); });
 
-/* ════ Compare button (hold = target, release = player) ════ */
-const btnCompare = document.getElementById('btn-compare');
-function onComparePress() {
-  btnCompare.classList.add('pressing');
-  stopCurrent();
-  buildGraph(targetPitch, targetTimbre, targetEcho);
-}
-function onCompareRelease() {
-  btnCompare.classList.remove('pressing');
-  stopCurrent();
-  buildGraph(lastPlayerPitch, lastPlayerTimbre, lastPlayerEcho);
-}
-btnCompare.addEventListener('mousedown',   onComparePress);
-btnCompare.addEventListener('touchstart',  onComparePress,  { passive: true });
-btnCompare.addEventListener('mouseup',     onCompareRelease);
-btnCompare.addEventListener('mouseleave',  onCompareRelease);
-btnCompare.addEventListener('touchend',    onCompareRelease);
-btnCompare.addEventListener('touchcancel', onCompareRelease);
+window.addEventListener('resize', () => { positionAllThumbs(); positionCompareThumbs(); });
 
-/* ════ Initial dots ════ */
-renderDots('round-dots-listen');
-renderDots('round-dots-tune');
-renderDots('round-dots-score');
+/* ════════════════════════════ Startup ════ */
+['round-dots-listen','round-dots-tune','round-dots-score'].forEach(id => renderDots(id));
+
+async function loadDefaultAudio() {
+  const s = document.getElementById('default-status');
+  ensureAudioContext();
+  try {
+    const resp = await fetch(DEFAULT_AUDIO_URL);
+    if (!resp.ok) throw new Error();
+    audioBuffer = await audioCtx.decodeAudioData(await resp.arrayBuffer());
+    s.style.color = '#9c5cd4';
+    s.textContent = '✓ Default meow loaded! (or upload your own below)';
+    document.getElementById('btn-start').disabled = false;
+  } catch {
+    s.style.color = '#e05580';
+    s.textContent = '⚠ Could not load default audio. Please upload a meow file.';
+  }
+}
+loadDefaultAudio();
 </script>
 </body>
 </html>
