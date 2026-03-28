@@ -143,6 +143,18 @@ let masterGainNode = null;
 let listenInterval = null;
 let scoreRAF = null;
 let workletReady = false;
+let wasPlayingBeforeHide = false;
+
+/* ── Pause audio when tab goes background ── */
+document.addEventListener('visibilitychange', () => {
+  if (!audioCtx) return;
+  if (document.hidden) {
+    wasPlayingBeforeHide = !!pitchShifterNode;
+    if (audioCtx.state === 'running') audioCtx.suspend();
+  } else {
+    if (wasPlayingBeforeHide && audioCtx.state === 'suspended') audioCtx.resume();
+  }
+});
 
 function ensureCtx(vol) {
   if (!audioCtx) {

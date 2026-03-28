@@ -41,6 +41,14 @@ body {
   position: relative;
 }
 
+@media (max-width: 540px) {
+  body { padding: 16px 6px 80px; }
+  .card { padding: 20px 16px 18px; border-radius: 22px; }
+  .card::before { left: 18px; }
+  .card::after  { right: 18px; }
+  .card-lace { inset: -7px; border-radius: 28px; }
+}
+
 /* ── Anime cat background ── */
 .bg-cats { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
 .bg-cat {
