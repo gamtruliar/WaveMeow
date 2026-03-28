@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sonic Palette: Meow Edition</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --text: #f0f0f0;
+      --muted: #555;
+      --neon-cyan: #00ffe0;
+      --neon-pink: #ff2d78;
+      --neon-yellow: #ffe600;
+      --neon-purple: #b56cff;
+      --slider-track: #222;
+      --slider-thumb: var(--neon-cyan);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 28px rgba(0,255,224,0.45);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; flex-direction: column; align-items: center; gap: 28px; width: 100%; max-width: 520px; }
+    .screen.active { display: flex; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 100%;
+    }
+
+    /* ── Round indicator ── */
+    .round-indicator {
+      display: flex; gap: 8px; justify-content: center;
+    }
+    .round-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--border); transition: background 0.3s;
+    }
+    .round-dot.done { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
+    .round-dot.active { background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover { border-color: var(--neon-cyan); background: rgba(0,255,224,0.03); }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .upload-label { font-size: 0.95rem; color: var(--muted); }
+    .upload-label span { color: var(--neon-cyan); font-weight: 600; }
+    .file-name { font-size: 0.8rem; color: var(--neon-cyan); margin-top: 8px; min-height: 1.2em; }
+
+    /* ── Buttons ── */
+    .btn {
+      border: none; cursor: pointer; border-radius: 10px;
+      font-family: inherit; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; transition: all 0.2s; outline: none;
+      padding: 14px 32px; font-size: 0.9rem;
+    }
+    .btn-primary {
+      background: var(--neon-cyan); color: #000;
+      box-shadow: 0 0 20px rgba(0,255,224,0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 0 36px rgba(0,255,224,0.6); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn-secondary {
+      background: transparent; color: var(--neon-cyan);
+      border: 1.5px solid var(--neon-cyan);
+    }
+    .btn-secondary:hover { background: rgba(0,255,224,0.08); }
+    .btn-danger {
+      background: var(--neon-pink); color: #fff;
+      box-shadow: 0 0 20px rgba(255,45,120,0.35);
+    }
+    .btn-danger:hover { box-shadow: 0 0 36px rgba(255,45,120,0.6); transform: translateY(-1px); }
+
+    /* ── Phase label ── */
+    .phase-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .phase-title {
+      font-size: 1.6rem; font-weight: 900; color: var(--text); line-height: 1.1;
+    }
+    .phase-title .highlight { color: var(--neon-pink); text-shadow: 0 0 20px rgba(255,45,120,0.5); }
+
+    /* ── Pulse animation ── */
+    .pulse-wrap { display: flex; justify-content: center; padding: 12px 0; }
+    .pulse {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,224,0.3) 0%, rgba(0,255,224,0) 70%);
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 24px rgba(0,255,224,0.4);
+      animation: pulse-anim 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse-anim {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.55; }
+    }
+    .pulse.idle { animation: none; opacity: 0.15; }
+
+    /* ── Countdown ── */
+    .countdown {
+      font-size: 2.8rem; font-weight: 900; color: var(--neon-cyan);
+      text-shadow: 0 0 28px rgba(0,255,224,0.6);
+      text-align: center; min-height: 1.2em; font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Sliders ── */
+    .sliders-wrap { display: flex; flex-direction: column; gap: 28px; width: 100%; }
+    .slider-row { display: flex; flex-direction: column; gap: 10px; }
+    .slider-header { display: flex; justify-content: space-between; align-items: center; }
+    .slider-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+    .slider-name.pitch-color   { color: var(--neon-cyan); }
+    .slider-name.timbre-color  { color: var(--neon-purple); }
+    .slider-name.amp-color     { color: var(--neon-yellow); }
+    .slider-hint { font-size: 0.7rem; color: var(--muted); }
+
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 6px; border-radius: 3px;
+      background: var(--slider-track); outline: none; cursor: pointer;
+    }
+    input[type="range"].pitch-range::-webkit-slider-thumb   { --thumb-color: var(--neon-cyan); }
+    input[type="range"].timbre-range::-webkit-slider-thumb  { --thumb-color: var(--neon-purple); }
+    input[type="range"].amp-range::-webkit-slider-thumb     { --thumb-color: var(--neon-yellow); }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--thumb-color, var(--neon-cyan));
+      box-shadow: 0 0 10px var(--thumb-color, var(--neon-cyan));
+      cursor: grab; border: 2px solid #000;
+      transition: box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; box-shadow: 0 0 22px var(--thumb-color, var(--neon-cyan)); }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px; border-radius: 3px;
+    }
+
+    /* Firefox */
+    input[type="range"].pitch-range::-moz-range-thumb   { background: var(--neon-cyan);   box-shadow: 0 0 10px var(--neon-cyan); }
+    input[type="range"].timbre-range::-moz-range-thumb  { background: var(--neon-purple);  box-shadow: 0 0 10px var(--neon-purple); }
+    input[type="range"].amp-range::-moz-range-thumb     { background: var(--neon-yellow);  box-shadow: 0 0 10px var(--neon-yellow); }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid #000; cursor: grab;
+    }
+    input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--slider-track); }
+
+    /* ── Score display ── */
+    .score-big {
+      font-size: 4rem; font-weight: 900; text-align: center;
+      color: var(--neon-cyan); text-shadow: 0 0 32px rgba(0,255,224,0.5);
+      line-height: 1;
+    }
+    .score-subtext { font-size: 0.8rem; color: var(--muted); text-align: center; margin-top: 6px; }
+
+    .breakdown { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+    .breakdown-item { text-align: center; }
+    .breakdown-val { font-size: 1.1rem; font-weight: 700; }
+    .breakdown-lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+    .breakdown-item.pitch-color .breakdown-val  { color: var(--neon-cyan); }
+    .breakdown-item.timbre-color .breakdown-val { color: var(--neon-purple); }
+    .breakdown-item.amp-color .breakdown-val    { color: var(--neon-yellow); }
+
+    /* ── Final score ── */
+    .final-score-wrap { text-align: center; }
+    .final-big {
+      font-size: 5.5rem; font-weight: 900; line-height: 1;
+      color: var(--neon-cyan); text-shadow: 0 0 48px rgba(0,255,224,0.6);
+    }
+    .final-comment {
+      font-size: 1.1rem; font-weight: 700; color: var(--text);
+      margin-top: 12px; text-align: center; line-height: 1.4;
+    }
+
+    /* ── History list ── */
+    .history { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .history-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.03);
+      font-size: 0.82rem;
+    }
+    .history-row .hr-round { color: var(--muted); }
+    .history-row .hr-val   { font-weight: 700; color: var(--neon-cyan); }
+
+    /* ── Waveform bars (decorative) ── */
+    .waveform { display: flex; gap: 3px; align-items: center; justify-content: center; height: 32px; }
+    .waveform-bar {
+      width: 3px; border-radius: 2px; background: var(--neon-cyan);
+      opacity: 0.15; transition: height 0.1s ease;
+    }
+    .waveform.playing .waveform-bar { opacity: 0.75; animation: wave 0.5s ease-in-out infinite alternate; }
+    .waveform-bar:nth-child(1) { animation-delay: 0s;    height: 8px;  }
+    .waveform-bar:nth-child(2) { animation-delay: 0.07s; height: 16px; }
+    .waveform-bar:nth-child(3) { animation-delay: 0.14s; height: 24px; }
+    .waveform-bar:nth-child(4) { animation-delay: 0.21s; height: 20px; }
+    .waveform-bar:nth-child(5) { animation-delay: 0.28s; height: 12px; }
+    .waveform-bar:nth-child(6) { animation-delay: 0.35s; height: 28px; }
+    .waveform-bar:nth-child(7) { animation-delay: 0.42s; height: 18px; }
+    .waveform-bar:nth-child(8) { animation-delay: 0.07s; height: 10px; }
+    @keyframes wave {
+      0%   { height: 4px; }
+      100% { height: 28px; }
+    }
+
+    .divider { width: 100%; height: 1px; background: var(--border); }
+  </style>
+</head>
+<body>
+
+  <h1>Sonic Palette</h1>
+  <p class="subtitle">Meow Edition &nbsp;·&nbsp; Can You Tune It?</p>
+
+  <!-- ═══════════════ SCREEN: INIT ═══════════════ -->
+  <div class="screen active" id="screen-init">
+    <div class="card">
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept="audio/*" />
+        <div class="upload-icon">🐾</div>
+        <div class="upload-label">Drop a meow file or <span>browse</span></div>
+        <div class="upload-label" style="font-size:0.75rem;margin-top:4px">MP3 / WAV / any audio</div>
+        <div class="file-name" id="file-name"></div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-start" disabled>Start Game</button>
+  </div>
+
+  <!-- ═══════════════ SCREEN: LISTEN ═══════════════ -->
+  <div class="screen" id="screen-listen">
+    <div class="round-indicator" id="round-dots-listen"></div>
+    <div class="card">
+      <div class="phase-label">Round <span id="listen-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 1</div>
+      <div class="phase-title">Listen to the <span class="highlight">Target</span></div>
+      <div style="margin-top:20px">
+        <div class="pulse-wrap"><div class="pulse" id="listen-pulse"></div></div>
+        <div class="countdown" id="listen-countdown">5</div>
+
+        <div class="waveform" id="listen-waveform">
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SCREEN: TUNE ═══════════════ -->
+  <div class="screen" id="screen-tune">
+    <div class="round-indicator" id="round-dots-tune"></div>
+    <div class="card">
+      <div class="phase-label">Round <span id="tune-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 2</div>
+      <div class="phase-title">Tune to <span class="highlight">Match</span></div>
+
+      <div style="margin-top:20px">
+        <div class="waveform" id="tune-waveform">
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+          <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        </div>
+      </div>
+
+      <div class="divider" style="margin:20px 0"></div>
+
+      <div class="sliders-wrap">
+        <div class="slider-row">
+          <div class="slider-header">
+            <span class="slider-name pitch-color">Pitch</span>
+            <span class="slider-hint">Low ←→ High</span>
+          </div>
+          <input type="range" class="pitch-range" id="slider-pitch"
+                 min="0" max="1000" value="500" step="1" />
+        </div>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span class="slider-name timbre-color">Timbre</span>
+            <span class="slider-hint">Chunky ←→ Tiny</span>
+          </div>
+          <input type="range" class="timbre-range" id="slider-timbre"
+                 min="0" max="1000" value="500" step="1" />
+        </div>
+        <div class="slider-row">
+          <div class="slider-header">
+            <span class="slider-name amp-color">Volume</span>
+            <span class="slider-hint">Quiet ←→ Loud</span>
+          </div>
+          <input type="range" class="amp-range" id="slider-amp"
+                 min="0" max="1000" value="500" step="1" />
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-confirm">Confirm</button>
+  </div>
+
+  <!-- ═══════════════ SCREEN: ROUND SCORE ═══════════════ -->
+  <div class="screen" id="screen-round-score">
+    <div class="round-indicator" id="round-dots-score"></div>
+    <div class="card">
+      <div class="phase-label">Round <span id="score-round-num">1</span> Result</div>
+      <div class="score-big" id="round-score-val">--</div>
+      <div class="score-subtext">Accuracy</div>
+      <div class="divider" style="margin:20px 0"></div>
+      <div class="breakdown">
+        <div class="breakdown-item pitch-color">
+          <div class="breakdown-val" id="bd-pitch">--</div>
+          <div class="breakdown-lbl">Pitch</div>
+        </div>
+        <div class="breakdown-item timbre-color">
+          <div class="breakdown-val" id="bd-timbre">--</div>
+          <div class="breakdown-lbl">Timbre</div>
+        </div>
+        <div class="breakdown-item amp-color">
+          <div class="breakdown-val" id="bd-amp">--</div>
+          <div class="breakdown-lbl">Volume</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-next-round">Next Round</button>
+  </div>
+
+  <!-- ═══════════════ SCREEN: GAME OVER ═══════════════ -->
+  <div class="screen" id="screen-gameover">
+    <div class="card">
+      <div class="final-score-wrap">
+        <div class="phase-label">Final Score</div>
+        <div class="final-big" id="final-score-val">--</div>
+        <div class="score-subtext">Average Accuracy</div>
+        <div class="final-comment" id="final-comment"></div>
+      </div>
+      <div class="divider" style="margin:20px 0"></div>
+      <div class="history" id="history-list"></div>
+    </div>
+    <button class="btn btn-danger" id="btn-play-again">Play Again</button>
+  </div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════ */
+const PITCH_MIN = 0.5, PITCH_MAX = 2.0;
+const TIMBRE_MIN = 300, TIMBRE_MAX = 3000;
+const AMP_MIN = 0.1, AMP_MAX = 1.0;
+const TOTAL_ROUNDS = 5;
+const LISTEN_SECONDS = 5;
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let audioCtx = null;
+let audioBuffer = null;
+let currentSource = null;
+let filterNode = null;
+let gainNode = null;
+
+let targetPitch = 1, targetTimbre = 1500, targetAmp = 0.5;
+let currentRound = 0;
+let roundScores = [];
+let listenTimer = null;
+
+/* ═══════════════════════════════════════════════
+   HELPERS: slider ↔ audio parameter mapping
+═══════════════════════════════════════════════ */
+function sliderToPitch(v)   { return PITCH_MIN + (v / 1000) * (PITCH_MAX - PITCH_MIN); }
+function sliderToTimbre(v)  { return TIMBRE_MIN + (v / 1000) * (TIMBRE_MAX - TIMBRE_MIN); }
+function sliderToAmp(v)     { return AMP_MIN + (v / 1000) * (AMP_MAX - AMP_MIN); }
+
+function pitchToSlider(p)   { return Math.round((p - PITCH_MIN) / (PITCH_MAX - PITCH_MIN) * 1000); }
+function timbreToSlider(t)  { return Math.round((t - TIMBRE_MIN) / (TIMBRE_MAX - TIMBRE_MIN) * 1000); }
+function ampToSlider(a)     { return Math.round((a - AMP_MIN) / (AMP_MAX - AMP_MIN) * 1000); }
+
+/* ════ Screen management ════ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+/* ════ Round dots ════ */
+function renderDots(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    const d = document.createElement('div');
+    d.className = 'round-dot' +
+      (i < currentRound ? ' done' : i === currentRound ? ' active' : '');
+    el.appendChild(d);
+  }
+}
+
+/* ════ Audio engine ════ */
+function ensureAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function stopCurrent() {
+  if (currentSource) {
+    try { currentSource.stop(); } catch(_) {}
+    currentSource = null;
+  }
+}
+
+function buildGraph(pitch, timbre, amp) {
+  stopCurrent();
+  ensureAudioContext();
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = audioBuffer;
+  source.loop = true;
+  source.playbackRate.value = pitch;
+
+  filterNode = audioCtx.createBiquadFilter();
+  filterNode.type = 'peaking';
+  filterNode.Q.value = 5;
+  filterNode.gain.value = 15;
+  filterNode.frequency.value = timbre;
+
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = amp;
+
+  source.connect(filterNode);
+  filterNode.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  source.start();
+  currentSource = source;
+  return source;
+}
+
+function applySliderValues() {
+  const pitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
+  const timbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
+  const amp    = sliderToAmp(+document.getElementById('slider-amp').value);
+
+  if (currentSource) {
+    currentSource.playbackRate.value = pitch;
+    filterNode.frequency.value = timbre;
+    gainNode.gain.value = amp;
+  } else {
+    buildGraph(pitch, timbre, amp);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SCORING
+═══════════════════════════════════════════════ */
+function calcScore(target, player, min, max) {
+  const raw = 100 - (Math.abs(target - player) / (max - min) * 100);
+  return Math.max(0, raw);
+}
+
+function computeRoundScore(pPitch, pTimbre, pAmp) {
+  const ps = calcScore(targetPitch,  pPitch,  PITCH_MIN,  PITCH_MAX);
+  const ts = calcScore(targetTimbre, pTimbre, TIMBRE_MIN, TIMBRE_MAX);
+  const as = calcScore(targetAmp,    pAmp,    AMP_MIN,    AMP_MAX);
+  const total = (ps + ts + as) / 3;
+  return { pitch: ps, timbre: ts, amp: as, total };
+}
+
+/* ═══════════════════════════════════════════════
+   GAME FLOW
+═══════════════════════════════════════════════ */
+function startGame() {
+  currentRound = 0;
+  roundScores = [];
+  startRound();
+}
+
+function startRound() {
+  // Generate random target values
+  targetPitch  = PITCH_MIN  + Math.random() * (PITCH_MAX  - PITCH_MIN);
+  targetTimbre = TIMBRE_MIN + Math.random() * (TIMBRE_MAX - TIMBRE_MIN);
+  targetAmp    = AMP_MIN    + Math.random() * (AMP_MAX    - AMP_MIN);
+
+  // Reset + randomize sliders
+  const rnd = () => Math.floor(Math.random() * 1001);
+  document.getElementById('slider-pitch').value  = rnd();
+  document.getElementById('slider-timbre').value = rnd();
+  document.getElementById('slider-amp').value    = rnd();
+
+  renderDots('round-dots-listen');
+  renderDots('round-dots-tune');
+  renderDots('round-dots-score');
+
+  document.getElementById('listen-round-num').textContent = currentRound + 1;
+  document.getElementById('tune-round-num').textContent   = currentRound + 1;
+  document.getElementById('score-round-num').textContent  = currentRound + 1;
+
+  showScreen('listen');
+  startListen();
+}
+
+function startListen() {
+  const pulse    = document.getElementById('listen-pulse');
+  const countdown = document.getElementById('listen-countdown');
+  const waveform = document.getElementById('listen-waveform');
+
+  pulse.classList.remove('idle');
+  waveform.classList.add('playing');
+
+  buildGraph(targetPitch, targetTimbre, targetAmp);
+
+  let remaining = LISTEN_SECONDS;
+  countdown.textContent = remaining;
+
+  listenTimer = setInterval(() => {
+    remaining--;
+    countdown.textContent = remaining;
+    if (remaining <= 0) {
+      clearInterval(listenTimer);
+      stopCurrent();
+      pulse.classList.add('idle');
+      waveform.classList.remove('playing');
+      startTune();
+    }
+  }, 1000);
+}
+
+function startTune() {
+  showScreen('tune');
+  const waveform = document.getElementById('tune-waveform');
+  waveform.classList.add('playing');
+  applySliderValues();
+}
+
+function confirmTune() {
+  stopCurrent();
+  document.getElementById('tune-waveform').classList.remove('playing');
+
+  const pPitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
+  const pTimbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
+  const pAmp    = sliderToAmp(+document.getElementById('slider-amp').value);
+
+  const result = computeRoundScore(pPitch, pTimbre, pAmp);
+  roundScores.push(result);
+
+  document.getElementById('round-score-val').textContent = result.total.toFixed(2) + '%';
+  document.getElementById('bd-pitch').textContent  = result.pitch.toFixed(1) + '%';
+  document.getElementById('bd-timbre').textContent = result.timbre.toFixed(1) + '%';
+  document.getElementById('bd-amp').textContent    = result.amp.toFixed(1) + '%';
+
+  const btnNext = document.getElementById('btn-next-round');
+  if (currentRound + 1 >= TOTAL_ROUNDS) {
+    btnNext.textContent = 'View Final Results';
+    btnNext.className = 'btn btn-danger';
+  } else {
+    btnNext.textContent = 'Next Round';
+    btnNext.className = 'btn btn-primary';
+  }
+
+  renderDots('round-dots-score');
+  showScreen('round-score');
+}
+
+function nextRound() {
+  currentRound++;
+  if (currentRound >= TOTAL_ROUNDS) {
+    showGameOver();
+  } else {
+    startRound();
+  }
+}
+
+function showGameOver() {
+  const avg = roundScores.reduce((a, b) => a + b.total, 0) / TOTAL_ROUNDS;
+
+  document.getElementById('final-score-val').textContent = avg.toFixed(2) + '%';
+
+  let comment = '';
+  if (avg >= 95)      comment = '"Tetrachromat of Sound!" 🎯';
+  else if (avg >= 85) comment = '"Cat Whisperer. Absolute unit." 😼';
+  else if (avg >= 70) comment = '"Pretty good ears, not gonna lie." 🎧';
+  else if (avg >= 50) comment = '"Decent. Keep practicing." 🐱';
+  else if (avg >= 30) comment = '"Are you sure you\'re listening?" 😐';
+  else                comment = '"Go wash your ears." 🚿';
+  document.getElementById('final-comment').textContent = comment;
+
+  const historyEl = document.getElementById('history-list');
+  historyEl.innerHTML = '';
+  roundScores.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    row.innerHTML = `<span class="hr-round">Round ${i + 1}</span><span class="hr-val">${r.total.toFixed(2)}%</span>`;
+    historyEl.appendChild(row);
+  });
+
+  showScreen('gameover');
+}
+
+function playAgain() {
+  stopCurrent();
+  startGame();
+}
+
+/* ═══════════════════════════════════════════════
+   FILE UPLOAD
+═══════════════════════════════════════════════ */
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('file-name').textContent = file.name;
+
+  ensureAudioContext();
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    document.getElementById('btn-start').disabled = false;
+  } catch(err) {
+    document.getElementById('file-name').textContent = '⚠ Could not decode audio file.';
+    document.getElementById('btn-start').disabled = true;
+  }
+});
+
+/* ═══════════════════════════════════════════════
+   SLIDER LIVE UPDATE
+═══════════════════════════════════════════════ */
+['slider-pitch', 'slider-timbre', 'slider-amp'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    applySliderValues();
+  });
+});
+
+/* ═══════════════════════════════════════════════
+   BUTTON EVENTS
+═══════════════════════════════════════════════ */
+document.getElementById('btn-start').addEventListener('click', () => {
+  ensureAudioContext();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  startGame();
+});
+
+document.getElementById('btn-confirm').addEventListener('click', confirmTune);
+document.getElementById('btn-next-round').addEventListener('click', nextRound);
+document.getElementById('btn-play-again').addEventListener('click', playAgain);
+
+/* ════ Initial dots ════ */
+renderDots('round-dots-listen');
+renderDots('round-dots-tune');
+renderDots('round-dots-score');
+</script>
+</body>
+</html>

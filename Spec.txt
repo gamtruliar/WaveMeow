@@ -1,0 +1,135 @@
+遊戲規格書：聽覺色盤 - 喵喵調音師 (Sonic Palette: Meow Edition)
+
+1. 遊戲概述 (Overview)
+
+這是一款基於純網頁前端技術的聽覺解謎遊戲。遊戲將測試玩家對聲音細節（音高、音色、空間回音）的敏銳度。玩家需要聆聽一段隨機生成的「目標貓叫聲」5秒鐘，然後利用三個滑桿（Sliders）在連續的數值空間中，將原始的貓叫聲調整至與目標聲音一致。遊戲共進行 5 個回合，最後計算總分。
+
+2. 技術棧 (Tech Stack)
+
+前端結構： HTML5
+
+視覺樣式： CSS3 (建議採用極簡、暗黑風格 Dark Mode，搭配霓虹強調色，類似 Spotify 或高階音訊軟體介面)
+
+核心邏輯： Vanilla JavaScript (ES6+)
+
+音訊引擎 (核心)： Web Audio API
+
+AudioContext
+
+AudioBufferSourceNode (用於載入和播放音訊檔)
+
+BiquadFilterNode (用於控制音色 Timbre)
+
+DelayNode (用於產生回音效果)
+
+GainNode (用於控制回音的混合比例 Wet/Dry Mix)
+
+3. 核心音訊物理對射 (Audio Mechanics Mapping)
+
+必須嚴格按照以下規則控制音頻節點：
+
+基礎聲源 (Base Sound)： 系統預設載入 dragon-studio-cat-meow-401729.mp3（或使用玩家上傳的自訂音檔），透過 AudioBuffer 載入。播放時設定 loop = true。
+
+變數 1：Pitch (音高)
+
+控制對象： AudioBufferSourceNode.playbackRate.value
+
+數值範圍： 0.5 (最低音/慢速) 到 2.0 (最高音/快速)
+
+變數 2：Timbre (音色/共鳴)
+
+控制對象： BiquadFilterNode
+
+節點設定： type = 'peaking', Q.value = 5, gain.value = 15 (藉由突顯特定頻段來模擬不同體型貓咪的胸腔/頭腔共鳴)
+
+控制參數： BiquadFilterNode.frequency.value
+
+數值範圍： 300 (Hz, 沉悶肥貓) 到 3000 (Hz, 尖銳幼貓)
+
+變數 3：Echo (回音程度 / 空間感)
+
+控制對象： 一個專門處理 Wet 訊號的 GainNode.gain.value (其訊號來源為 DelayNode)
+
+節點設定： DelayNode.delayTime.value = 0.3 (固定 0.3 秒的回音延遲)
+
+數值範圍： 0.0 (完全無回音/貼近耳邊) 到 0.8 (強烈回音/空曠山谷感)
+
+4. 遊戲流程 (Game Flow)
+
+狀態 0：初始化 (Init)
+
+系統預設提供一段內建的貓叫聲 (dragon-studio-cat-meow-401729.mp3)。畫面顯示一個 可選 (Optional) 的 File Input，提示玩家「(選填) 上傳自訂貓叫聲 (Upload a custom Meow sound)」。
+
+若玩家無上傳檔案，JS 使用 fetch 載入並以 AudioContext.decodeAudioData 解析預設音訊；若玩家選擇檔案，則改用 FileReader 解析玩家上傳的音訊。
+
+解析成功後，顯示「Start Game」按鈕。
+
+狀態 1：聆聽階段 (Phase: Listen) - 重複 5 圈
+
+系統使用 Math.random() 為 Pitch, Timbre, Echo 隨機生成一組目標數值 (Target Values)。
+
+隱藏/禁用三個玩家控制滑桿。
+
+畫面顯示「Listen to the Target... (正在聆聽目標聲音)」。
+
+應用 Target Values 播放聲音，持續 5 秒鐘。
+
+5 秒後，停止播放目標聲音，自動進入狀態 2。
+
+狀態 2：調音還原階段 (Phase: Tune)
+
+畫面顯示 3 個 <input type="range"> 滑桿 (Pitch, Timbre, Echo)。
+
+滑桿初始位置應隨機放置，或預設在正中間。
+
+重要：不能在介面上顯示具體的 Hz、比例或倍速數字，必須讓玩家純靠聽覺判斷。
+
+玩家拖動滑桿 (oninput 事件) 時，實時 (Real-time) 改變音訊節點的參數，並持續循環播放 (Loop) 玩家目前設定的聲音。
+
+玩家認為調整完畢後，點擊「Confirm (確認)」按鈕。
+
+點擊後，停止播放聲音，進入狀態 3。
+
+狀態 3：回合結算 (Phase: Round Score)
+
+計算該回合分數（邏輯見下方第 6 點）。
+
+顯示該回合的準確度百分比 (例如：85.4%)。
+
+如果尚未達到 5 個回合，顯示「Next Round」按鈕；若已滿 5 回合，顯示「View Final Results」按鈕。
+
+狀態 4：遊戲結束 (Phase: Game Over)
+
+顯示 5 個回合的總平均分。
+
+顯示對應的趣味評語 (例如："Tetrachromat of Sound!" 或 "Go wash your ears.")。
+
+提供「Play Again」按鈕。
+
+5. UI/UX 設計要求 (UI/UX Design)
+
+風格： 參考色彩敏銳度測試遊戲的極簡設計。黑色背景 (#000000 或 #111111)，白色大粗體字 (Sans-serif, 例如 Inter 或 Helvetica)。
+
+滑桿設計 (Sliders)：
+
+移除預設的滑桿樣式 (appearance: none)。
+
+使用 CSS 自訂 Track 和 Thumb，使其看起來像專業混音器 (Mixer) 的推桿，或者具備流線型的科幻感。
+
+視覺回饋： 播放聲音時，可以有一個簡單的 CSS 動畫（例如一個發光的圓圈隨機縮放），增加沉浸感。
+
+6. 計分演算法 (Scoring Algorithm)
+
+針對每一次的 Pitch, Timbre, Echo，計算玩家輸入值 ($P$) 與目標值 ($T$) 的差異百分比。
+
+計算單項誤差：
+
+Pitch Score = 100 - ( Math.abs(T_pitch - P_pitch) / (2.0 - 0.5) * 100 )
+
+Timbre Score = 100 - ( Math.abs(T_timbre - P_timbre) / (3000 - 300) * 100 )
+
+Echo Score = 100 - ( Math.abs(T_echo - P_echo) / (0.8 - 0.0) * 100 )
+
+確保分數不為負數： 如果分數 < 0，設為 0。
+
+回合總分： Round Score = (Pitch Score + Timbre Score + Echo Score) / 3 (保留兩位小數)。
