@@ -562,7 +562,7 @@ function startListen() {
   pulse.classList.remove('idle');
   waveform.classList.add('playing');
 
-  buildGraph(targetPitch, targetTimbre, targetAmp);
+  buildGraph(targetPitch, targetTimbre, targetEcho);
 
   let remaining = LISTEN_SECONDS;
   countdown.textContent = remaining;
