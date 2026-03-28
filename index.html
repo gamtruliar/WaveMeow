@@ -19,6 +19,7 @@
       --neon-pink: #ff2d78;
       --neon-yellow: #ffe600;
       --neon-purple: #b56cff;
+      --neon-green: #39ff6e;
       --slider-track: #222;
       --slider-thumb: var(--neon-cyan);
     }
@@ -255,6 +256,70 @@
     }
 
     .divider { width: 100%; height: 1px; background: var(--border); }
+
+    /* ── Compare sliders (score screen) ── */
+    .compare-rows { display: flex; flex-direction: column; gap: 22px; width: 100%; margin-top: 16px; }
+    .compare-row { display: flex; flex-direction: column; gap: 8px; }
+    .compare-label { display: flex; justify-content: space-between; align-items: center; }
+    .compare-tags { display: flex; gap: 10px; }
+    .compare-tag {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 2px 7px; border-radius: 4px;
+    }
+    .compare-tag.you    { background: rgba(0,255,224,0.15); color: var(--neon-cyan); }
+    .compare-tag.target { background: rgba(57,255,110,0.15); color: var(--neon-green); }
+    .compare-track-wrap { position: relative; }
+    .compare-track-wrap input[type="range"] { pointer-events: none; }
+    .target-marker {
+      position: absolute;
+      top: 50%; transform: translate(-50%, -50%);
+      width: 4px; height: 22px;
+      background: var(--neon-green);
+      border-radius: 2px;
+      box-shadow: 0 0 10px var(--neon-green), 0 0 4px #fff;
+      pointer-events: none;
+    }
+
+    /* ── Compare button ── */
+    .compare-btn-wrap { display: flex; justify-content: center; margin-top: 4px; }
+    .btn-compare {
+      background: transparent;
+      border: 1.5px solid var(--neon-green);
+      color: var(--neon-green);
+      border-radius: 10px;
+      font-family: inherit; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 11px 28px; font-size: 0.82rem;
+      cursor: pointer; user-select: none;
+      transition: background 0.15s, box-shadow 0.15s;
+      -webkit-user-select: none;
+    }
+    .btn-compare:active,
+    .btn-compare.pressing {
+      background: rgba(57,255,110,0.12);
+      box-shadow: 0 0 18px rgba(57,255,110,0.5);
+    }
+    .compare-hint { font-size: 0.68rem; color: var(--muted); text-align: center; margin-top: 6px; }
+
+    /* ── Score count-up ── */
+    .score-big.animating { color: var(--neon-pink); text-shadow: 0 0 32px rgba(255,45,120,0.5); }
+
+    /* ── Score bar ── */
+    .score-bars { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .score-bar-row { display: flex; align-items: center; gap: 10px; }
+    .score-bar-lbl { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; width: 48px; flex-shrink: 0; }
+    .score-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 0.8s cubic-bezier(0.22,1,0.36,1); }
+    .score-bar-row.pitch-color  .score-bar-lbl { color: var(--neon-cyan); }
+    .score-bar-row.timbre-color .score-bar-lbl { color: var(--neon-purple); }
+    .score-bar-row.echo-color   .score-bar-lbl { color: var(--neon-yellow); }
+    .score-bar-row.pitch-color  .score-bar-fill { background: var(--neon-cyan); }
+    .score-bar-row.timbre-color .score-bar-fill { background: var(--neon-purple); }
+    .score-bar-row.echo-color   .score-bar-fill { background: var(--neon-yellow); }
+    .score-bar-pct { font-size: 0.7rem; font-weight: 700; width: 40px; text-align: right; flex-shrink: 0; }
+    .score-bar-row.pitch-color  .score-bar-pct { color: var(--neon-cyan); }
+    .score-bar-row.timbre-color .score-bar-pct { color: var(--neon-purple); }
+    .score-bar-row.echo-color   .score-bar-pct { color: var(--neon-yellow); }
   </style>
 </head>
 <body>
@@ -351,23 +416,76 @@
     <div class="round-indicator" id="round-dots-score"></div>
     <div class="card">
       <div class="phase-label">Round <span id="score-round-num">1</span> Result</div>
-      <div class="score-big" id="round-score-val">--</div>
+      <div class="score-big" id="round-score-val">0%</div>
       <div class="score-subtext">Accuracy</div>
-      <div class="divider" style="margin:20px 0"></div>
-      <div class="breakdown">
-        <div class="breakdown-item pitch-color">
-          <div class="breakdown-val" id="bd-pitch">--</div>
-          <div class="breakdown-lbl">Pitch</div>
+
+      <div class="score-bars" style="margin-top:14px">
+        <div class="score-bar-row pitch-color">
+          <span class="score-bar-lbl">Pitch</span>
+          <div class="score-bar-track"><div class="score-bar-fill" id="bar-pitch"></div></div>
+          <span class="score-bar-pct" id="bd-pitch">--</span>
         </div>
-        <div class="breakdown-item timbre-color">
-          <div class="breakdown-val" id="bd-timbre">--</div>
-          <div class="breakdown-lbl">Timbre</div>
+        <div class="score-bar-row timbre-color">
+          <span class="score-bar-lbl">Timbre</span>
+          <div class="score-bar-track"><div class="score-bar-fill" id="bar-timbre"></div></div>
+          <span class="score-bar-pct" id="bd-timbre">--</span>
         </div>
-        <div class="breakdown-item echo-color">
-          <div class="breakdown-val" id="bd-echo">--</div>
-          <div class="breakdown-lbl">Echo</div>
+        <div class="score-bar-row echo-color">
+          <span class="score-bar-lbl">Echo</span>
+          <div class="score-bar-track"><div class="score-bar-fill" id="bar-echo"></div></div>
+          <span class="score-bar-pct" id="bd-echo">--</span>
         </div>
       </div>
+
+      <div class="divider" style="margin:20px 0"></div>
+
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Slider Comparison</div>
+      <div class="compare-rows">
+        <div class="compare-row">
+          <div class="compare-label">
+            <span class="slider-name pitch-color">Pitch</span>
+            <div class="compare-tags">
+              <span class="compare-tag you">You</span>
+              <span class="compare-tag target">Target</span>
+            </div>
+          </div>
+          <div class="compare-track-wrap">
+            <input type="range" class="pitch-range" id="cmp-pitch" min="0" max="1000" value="500" />
+            <div class="target-marker" id="tgt-pitch"></div>
+          </div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-label">
+            <span class="slider-name timbre-color">Timbre</span>
+            <div class="compare-tags">
+              <span class="compare-tag you">You</span>
+              <span class="compare-tag target">Target</span>
+            </div>
+          </div>
+          <div class="compare-track-wrap">
+            <input type="range" class="timbre-range" id="cmp-timbre" min="0" max="1000" value="500" />
+            <div class="target-marker" id="tgt-timbre"></div>
+          </div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-label">
+            <span class="slider-name echo-color">Echo</span>
+            <div class="compare-tags">
+              <span class="compare-tag you">You</span>
+              <span class="compare-tag target">Target</span>
+            </div>
+          </div>
+          <div class="compare-track-wrap">
+            <input type="range" class="echo-range" id="cmp-echo" min="0" max="1000" value="500" />
+            <div class="target-marker" id="tgt-echo"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-btn-wrap" style="margin-top:20px">
+        <button class="btn-compare" id="btn-compare">Hold: Target &nbsp;/&nbsp; Release: You</button>
+      </div>
+      <div class="compare-hint">Press and hold to hear the target sound</div>
     </div>
     <button class="btn btn-primary" id="btn-next-round">Next Round</button>
   </div>
@@ -410,9 +528,11 @@ let delayNode = null;
 let wetGainNode = null;
 
 let targetPitch = 1, targetTimbre = 1500, targetEcho = 0.4;
+let lastPlayerPitch = 1, lastPlayerTimbre = 1500, lastPlayerEcho = 0.4;
 let currentRound = 0;
 let roundScores = [];
 let listenTimer = null;
+let scoreCountUpRAF = null;
 
 /* ═══════════════════════════════════════════════
    HELPERS: slider ↔ audio parameter mapping
@@ -587,6 +707,29 @@ function startTune() {
   applySliderValues();
 }
 
+/* ════ Count-up animation ════ */
+function animateScore(targetVal, onDone) {
+  if (scoreCountUpRAF) cancelAnimationFrame(scoreCountUpRAF);
+  const el = document.getElementById('round-score-val');
+  el.classList.add('animating');
+  const duration = 900;
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const current = eased * targetVal;
+    el.textContent = current.toFixed(2) + '%';
+    if (t < 1) {
+      scoreCountUpRAF = requestAnimationFrame(step);
+    } else {
+      el.textContent = targetVal.toFixed(2) + '%';
+      el.classList.remove('animating');
+      if (onDone) onDone();
+    }
+  }
+  scoreCountUpRAF = requestAnimationFrame(step);
+}
+
 function confirmTune() {
   stopCurrent();
   document.getElementById('tune-waveform').classList.remove('playing');
@@ -595,13 +738,47 @@ function confirmTune() {
   const pTimbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
   const pEcho   = sliderToEcho(+document.getElementById('slider-echo').value);
 
+  lastPlayerPitch  = pPitch;
+  lastPlayerTimbre = pTimbre;
+  lastPlayerEcho   = pEcho;
+
   const result = computeRoundScore(pPitch, pTimbre, pEcho);
   roundScores.push(result);
 
-  document.getElementById('round-score-val').textContent = result.total.toFixed(2) + '%';
-  document.getElementById('bd-pitch').textContent  = result.pitch.toFixed(1) + '%';
-  document.getElementById('bd-timbre').textContent = result.timbre.toFixed(1) + '%';
-  document.getElementById('bd-echo').textContent   = result.echo.toFixed(1) + '%';
+  // ── Comparison sliders: set player position ──
+  const pPitchSlider  = pitchToSlider(pPitch);
+  const pTimbreSlider = timbreToSlider(pTimbre);
+  const pEchoSlider   = echoToSlider(pEcho);
+  document.getElementById('cmp-pitch').value  = pPitchSlider;
+  document.getElementById('cmp-timbre').value = pTimbreSlider;
+  document.getElementById('cmp-echo').value   = pEchoSlider;
+
+  // ── Target ghost markers ──
+  const tPitchSlider  = pitchToSlider(targetPitch);
+  const tTimbreSlider = timbreToSlider(targetTimbre);
+  const tEchoSlider   = echoToSlider(targetEcho);
+  function setMarker(id, val) {
+    // Offset accounts for the thumb radius (~10px) on a full-width track
+    const pct = val / 1000;
+    document.getElementById(id).style.left = `calc(${pct * 100}% - ${(pct - 0.5) * 20}px)`;
+  }
+  // Use rAF to ensure layout is ready after showScreen
+  requestAnimationFrame(() => {
+    setMarker('tgt-pitch',  tPitchSlider);
+    setMarker('tgt-timbre', tTimbreSlider);
+    setMarker('tgt-echo',   tEchoSlider);
+  });
+
+  // ── Score bars ──
+  document.getElementById('bd-pitch').textContent   = result.pitch.toFixed(1) + '%';
+  document.getElementById('bd-timbre').textContent  = result.timbre.toFixed(1) + '%';
+  document.getElementById('bd-echo').textContent    = result.echo.toFixed(1) + '%';
+  // Animate bars after a short delay
+  setTimeout(() => {
+    document.getElementById('bar-pitch').style.width  = result.pitch + '%';
+    document.getElementById('bar-timbre').style.width = result.timbre + '%';
+    document.getElementById('bar-echo').style.width   = result.echo + '%';
+  }, 200);
 
   const btnNext = document.getElementById('btn-next-round');
   if (currentRound + 1 >= TOTAL_ROUNDS) {
@@ -614,9 +791,19 @@ function confirmTune() {
 
   renderDots('round-dots-score');
   showScreen('round-score');
+
+  // Reset bars to 0 before animation
+  document.getElementById('bar-pitch').style.width  = '0%';
+  document.getElementById('bar-timbre').style.width = '0%';
+  document.getElementById('bar-echo').style.width   = '0%';
+
+  // Start playing player sound, then count up score
+  buildGraph(lastPlayerPitch, lastPlayerTimbre, lastPlayerEcho);
+  animateScore(result.total);
 }
 
 function nextRound() {
+  stopCurrent();
   currentRound++;
   if (currentRound >= TOTAL_ROUNDS) {
     showGameOver();
@@ -720,6 +907,25 @@ loadDefaultAudio();
 document.getElementById('btn-confirm').addEventListener('click', confirmTune);
 document.getElementById('btn-next-round').addEventListener('click', nextRound);
 document.getElementById('btn-play-again').addEventListener('click', playAgain);
+
+/* ════ Compare button (hold = target, release = player) ════ */
+const btnCompare = document.getElementById('btn-compare');
+function onComparePress() {
+  btnCompare.classList.add('pressing');
+  stopCurrent();
+  buildGraph(targetPitch, targetTimbre, targetEcho);
+}
+function onCompareRelease() {
+  btnCompare.classList.remove('pressing');
+  stopCurrent();
+  buildGraph(lastPlayerPitch, lastPlayerTimbre, lastPlayerEcho);
+}
+btnCompare.addEventListener('mousedown',   onComparePress);
+btnCompare.addEventListener('touchstart',  onComparePress,  { passive: true });
+btnCompare.addEventListener('mouseup',     onCompareRelease);
+btnCompare.addEventListener('mouseleave',  onCompareRelease);
+btnCompare.addEventListener('touchend',    onCompareRelease);
+btnCompare.addEventListener('touchcancel', onCompareRelease);
 
 /* ════ Initial dots ════ */
 renderDots('round-dots-listen');
