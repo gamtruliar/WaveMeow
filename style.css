@@ -135,6 +135,9 @@ h1 {
 
 .sparkles { display: flex; gap: 6px; justify-content: center; font-size: 1.1rem; margin: 8px 0 18px; filter: drop-shadow(0 0 4px rgba(220,160,80,0.5)); }
 
+/* ── App root ── */
+#app { width: 100%; display: flex; flex-direction: column; align-items: center; }
+
 /* ── Screens ── */
 .screen { display: none; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 500px; position: relative; z-index: 1; }
 .screen.active { display: flex; }
