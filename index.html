@@ -162,7 +162,7 @@
     .slider-name { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
     .slider-name.pitch-color   { color: var(--neon-cyan); }
     .slider-name.timbre-color  { color: var(--neon-purple); }
-    .slider-name.amp-color     { color: var(--neon-yellow); }
+    .slider-name.echo-color     { color: var(--neon-yellow); }
     .slider-hint { font-size: 0.7rem; color: var(--muted); }
 
     input[type="range"] {
@@ -172,7 +172,7 @@
     }
     input[type="range"].pitch-range::-webkit-slider-thumb   { --thumb-color: var(--neon-cyan); }
     input[type="range"].timbre-range::-webkit-slider-thumb  { --thumb-color: var(--neon-purple); }
-    input[type="range"].amp-range::-webkit-slider-thumb     { --thumb-color: var(--neon-yellow); }
+    input[type="range"].echo-range::-webkit-slider-thumb    { --thumb-color: var(--neon-yellow); }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
@@ -191,7 +191,7 @@
     /* Firefox */
     input[type="range"].pitch-range::-moz-range-thumb   { background: var(--neon-cyan);   box-shadow: 0 0 10px var(--neon-cyan); }
     input[type="range"].timbre-range::-moz-range-thumb  { background: var(--neon-purple);  box-shadow: 0 0 10px var(--neon-purple); }
-    input[type="range"].amp-range::-moz-range-thumb     { background: var(--neon-yellow);  box-shadow: 0 0 10px var(--neon-yellow); }
+    input[type="range"].echo-range::-moz-range-thumb    { background: var(--neon-yellow);  box-shadow: 0 0 10px var(--neon-yellow); }
     input[type="range"]::-moz-range-thumb {
       width: 20px; height: 20px; border-radius: 50%; border: 2px solid #000; cursor: grab;
     }
@@ -211,7 +211,7 @@
     .breakdown-lbl { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
     .breakdown-item.pitch-color .breakdown-val  { color: var(--neon-cyan); }
     .breakdown-item.timbre-color .breakdown-val { color: var(--neon-purple); }
-    .breakdown-item.amp-color .breakdown-val    { color: var(--neon-yellow); }
+    .breakdown-item.echo-color .breakdown-val   { color: var(--neon-yellow); }
 
     /* ── Final score ── */
     .final-score-wrap { text-align: center; }
@@ -265,11 +265,13 @@
   <!-- ═══════════════ SCREEN: INIT ═══════════════ -->
   <div class="screen active" id="screen-init">
     <div class="card">
-      <div class="upload-zone" id="upload-zone">
+      <div class="phase-label">Initialize</div>
+      <div class="phase-title" style="margin-bottom:20px">Ready to <span class="highlight">Meow?</span></div>
+      <div id="default-status" style="font-size:0.82rem;color:var(--muted);text-align:center;margin-bottom:18px;min-height:1.4em;">Loading default meow…</div>
+      <div class="upload-zone" id="upload-zone" style="padding:22px 24px;">
         <input type="file" id="file-input" accept="audio/*" />
-        <div class="upload-icon">🐾</div>
-        <div class="upload-label">Drop a meow file or <span>browse</span></div>
-        <div class="upload-label" style="font-size:0.75rem;margin-top:4px">MP3 / WAV / any audio</div>
+        <div class="upload-icon" style="font-size:1.8rem;margin-bottom:8px">🐾</div>
+        <div class="upload-label" style="font-size:0.8rem">(Optional) Upload a custom meow — <span>browse</span></div>
         <div class="file-name" id="file-name"></div>
       </div>
     </div>
@@ -333,10 +335,10 @@
         </div>
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name amp-color">Volume</span>
-            <span class="slider-hint">Quiet ←→ Loud</span>
+            <span class="slider-name echo-color">Echo</span>
+            <span class="slider-hint">Dry ←→ Reverb</span>
           </div>
-          <input type="range" class="amp-range" id="slider-amp"
+          <input type="range" class="echo-range" id="slider-echo"
                  min="0" max="1000" value="500" step="1" />
         </div>
       </div>
@@ -361,9 +363,9 @@
           <div class="breakdown-val" id="bd-timbre">--</div>
           <div class="breakdown-lbl">Timbre</div>
         </div>
-        <div class="breakdown-item amp-color">
-          <div class="breakdown-val" id="bd-amp">--</div>
-          <div class="breakdown-lbl">Volume</div>
+        <div class="breakdown-item echo-color">
+          <div class="breakdown-val" id="bd-echo">--</div>
+          <div class="breakdown-lbl">Echo</div>
         </div>
       </div>
     </div>
@@ -391,9 +393,11 @@
 ═══════════════════════════════════════════════ */
 const PITCH_MIN = 0.5, PITCH_MAX = 2.0;
 const TIMBRE_MIN = 300, TIMBRE_MAX = 3000;
-const AMP_MIN = 0.1, AMP_MAX = 1.0;
+const ECHO_MIN = 0.0, ECHO_MAX = 0.8;
+const ECHO_DELAY = 0.3; // fixed delay time in seconds
 const TOTAL_ROUNDS = 5;
 const LISTEN_SECONDS = 5;
+const DEFAULT_AUDIO_URL = 'dragon-studio-cat-meow-401729.mp3';
 
 /* ═══════════════════════════════════════════════
    STATE
@@ -402,9 +406,10 @@ let audioCtx = null;
 let audioBuffer = null;
 let currentSource = null;
 let filterNode = null;
-let gainNode = null;
+let delayNode = null;
+let wetGainNode = null;
 
-let targetPitch = 1, targetTimbre = 1500, targetAmp = 0.5;
+let targetPitch = 1, targetTimbre = 1500, targetEcho = 0.4;
 let currentRound = 0;
 let roundScores = [];
 let listenTimer = null;
@@ -412,13 +417,13 @@ let listenTimer = null;
 /* ═══════════════════════════════════════════════
    HELPERS: slider ↔ audio parameter mapping
 ═══════════════════════════════════════════════ */
-function sliderToPitch(v)   { return PITCH_MIN + (v / 1000) * (PITCH_MAX - PITCH_MIN); }
+function sliderToPitch(v)   { return PITCH_MIN  + (v / 1000) * (PITCH_MAX  - PITCH_MIN); }
 function sliderToTimbre(v)  { return TIMBRE_MIN + (v / 1000) * (TIMBRE_MAX - TIMBRE_MIN); }
-function sliderToAmp(v)     { return AMP_MIN + (v / 1000) * (AMP_MAX - AMP_MIN); }
+function sliderToEcho(v)    { return ECHO_MIN   + (v / 1000) * (ECHO_MAX   - ECHO_MIN); }
 
-function pitchToSlider(p)   { return Math.round((p - PITCH_MIN) / (PITCH_MAX - PITCH_MIN) * 1000); }
+function pitchToSlider(p)   { return Math.round((p - PITCH_MIN)  / (PITCH_MAX  - PITCH_MIN)  * 1000); }
 function timbreToSlider(t)  { return Math.round((t - TIMBRE_MIN) / (TIMBRE_MAX - TIMBRE_MIN) * 1000); }
-function ampToSlider(a)     { return Math.round((a - AMP_MIN) / (AMP_MAX - AMP_MIN) * 1000); }
+function echoToSlider(e)    { return Math.round((e - ECHO_MIN)   / (ECHO_MAX   - ECHO_MIN)   * 1000); }
 
 /* ════ Screen management ════ */
 function showScreen(id) {
@@ -450,7 +455,7 @@ function stopCurrent() {
   }
 }
 
-function buildGraph(pitch, timbre, amp) {
+function buildGraph(pitch, timbre, echo) {
   stopCurrent();
   ensureAudioContext();
 
@@ -465,29 +470,38 @@ function buildGraph(pitch, timbre, amp) {
   filterNode.gain.value = 15;
   filterNode.frequency.value = timbre;
 
-  gainNode = audioCtx.createGain();
-  gainNode.gain.value = amp;
+  // Dry path: filter → destination
+  const dryGain = audioCtx.createGain();
+  dryGain.gain.value = 1.0;
+
+  // Wet (echo) path: filter → delay → wetGain → destination
+  delayNode = audioCtx.createDelay();
+  delayNode.delayTime.value = ECHO_DELAY;
+  wetGainNode = audioCtx.createGain();
+  wetGainNode.gain.value = echo;
 
   source.connect(filterNode);
-  filterNode.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+  filterNode.connect(dryGain);
+  dryGain.connect(audioCtx.destination);
+  filterNode.connect(delayNode);
+  delayNode.connect(wetGainNode);
+  wetGainNode.connect(audioCtx.destination);
 
   source.start();
   currentSource = source;
-  return source;
 }
 
 function applySliderValues() {
   const pitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
   const timbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const amp    = sliderToAmp(+document.getElementById('slider-amp').value);
+  const echo   = sliderToEcho(+document.getElementById('slider-echo').value);
 
   if (currentSource) {
     currentSource.playbackRate.value = pitch;
     filterNode.frequency.value = timbre;
-    gainNode.gain.value = amp;
+    wetGainNode.gain.value = echo;
   } else {
-    buildGraph(pitch, timbre, amp);
+    buildGraph(pitch, timbre, echo);
   }
 }
 
@@ -499,12 +513,12 @@ function calcScore(target, player, min, max) {
   return Math.max(0, raw);
 }
 
-function computeRoundScore(pPitch, pTimbre, pAmp) {
+function computeRoundScore(pPitch, pTimbre, pEcho) {
   const ps = calcScore(targetPitch,  pPitch,  PITCH_MIN,  PITCH_MAX);
   const ts = calcScore(targetTimbre, pTimbre, TIMBRE_MIN, TIMBRE_MAX);
-  const as = calcScore(targetAmp,    pAmp,    AMP_MIN,    AMP_MAX);
-  const total = (ps + ts + as) / 3;
-  return { pitch: ps, timbre: ts, amp: as, total };
+  const es = calcScore(targetEcho,   pEcho,   ECHO_MIN,   ECHO_MAX);
+  const total = (ps + ts + es) / 3;
+  return { pitch: ps, timbre: ts, echo: es, total };
 }
 
 /* ═══════════════════════════════════════════════
@@ -520,13 +534,13 @@ function startRound() {
   // Generate random target values
   targetPitch  = PITCH_MIN  + Math.random() * (PITCH_MAX  - PITCH_MIN);
   targetTimbre = TIMBRE_MIN + Math.random() * (TIMBRE_MAX - TIMBRE_MIN);
-  targetAmp    = AMP_MIN    + Math.random() * (AMP_MAX    - AMP_MIN);
+  targetEcho   = ECHO_MIN   + Math.random() * (ECHO_MAX   - ECHO_MIN);
 
   // Reset + randomize sliders
   const rnd = () => Math.floor(Math.random() * 1001);
   document.getElementById('slider-pitch').value  = rnd();
   document.getElementById('slider-timbre').value = rnd();
-  document.getElementById('slider-amp').value    = rnd();
+  document.getElementById('slider-echo').value   = rnd();
 
   renderDots('round-dots-listen');
   renderDots('round-dots-tune');
@@ -579,15 +593,15 @@ function confirmTune() {
 
   const pPitch  = sliderToPitch(+document.getElementById('slider-pitch').value);
   const pTimbre = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const pAmp    = sliderToAmp(+document.getElementById('slider-amp').value);
+  const pEcho   = sliderToEcho(+document.getElementById('slider-echo').value);
 
-  const result = computeRoundScore(pPitch, pTimbre, pAmp);
+  const result = computeRoundScore(pPitch, pTimbre, pEcho);
   roundScores.push(result);
 
   document.getElementById('round-score-val').textContent = result.total.toFixed(2) + '%';
   document.getElementById('bd-pitch').textContent  = result.pitch.toFixed(1) + '%';
   document.getElementById('bd-timbre').textContent = result.timbre.toFixed(1) + '%';
-  document.getElementById('bd-amp').textContent    = result.amp.toFixed(1) + '%';
+  document.getElementById('bd-echo').textContent   = result.echo.toFixed(1) + '%';
 
   const btnNext = document.getElementById('btn-next-round');
   if (currentRound + 1 >= TOTAL_ROUNDS) {
@@ -643,7 +657,27 @@ function playAgain() {
 }
 
 /* ═══════════════════════════════════════════════
-   FILE UPLOAD
+   DEFAULT AUDIO LOAD
+═══════════════════════════════════════════════ */
+async function loadDefaultAudio() {
+  const statusEl = document.getElementById('default-status');
+  ensureAudioContext();
+  try {
+    const resp = await fetch(DEFAULT_AUDIO_URL);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const arrayBuffer = await resp.arrayBuffer();
+    audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    statusEl.style.color = 'var(--neon-cyan)';
+    statusEl.textContent = '✓ Default meow loaded — or upload your own below';
+    document.getElementById('btn-start').disabled = false;
+  } catch(err) {
+    statusEl.style.color = 'var(--neon-pink)';
+    statusEl.textContent = '⚠ Could not load default audio. Please upload a meow file.';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   FILE UPLOAD (optional override)
 ═══════════════════════════════════════════════ */
 document.getElementById('file-input').addEventListener('change', async (e) => {
   const file = e.target.files[0];
@@ -654,17 +688,18 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
     audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    document.getElementById('default-status').style.color = 'var(--neon-cyan)';
+    document.getElementById('default-status').textContent = '✓ Custom meow loaded: ' + file.name;
     document.getElementById('btn-start').disabled = false;
   } catch(err) {
     document.getElementById('file-name').textContent = '⚠ Could not decode audio file.';
-    document.getElementById('btn-start').disabled = true;
   }
 });
 
 /* ═══════════════════════════════════════════════
    SLIDER LIVE UPDATE
 ═══════════════════════════════════════════════ */
-['slider-pitch', 'slider-timbre', 'slider-amp'].forEach(id => {
+['slider-pitch', 'slider-timbre', 'slider-echo'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
     applySliderValues();
   });
@@ -678,6 +713,9 @@ document.getElementById('btn-start').addEventListener('click', () => {
   if (audioCtx.state === 'suspended') audioCtx.resume();
   startGame();
 });
+
+// Auto-load default audio on page start
+loadDefaultAudio();
 
 document.getElementById('btn-confirm').addEventListener('click', confirmTune);
 document.getElementById('btn-next-round').addEventListener('click', nextRound);
