@@ -4,9 +4,9 @@
 
 /* ── Constants ── */
 const PITCH_MIN = 0.5, PITCH_MAX = 2.0;
-const TIMBRE_MIN = 300, TIMBRE_MAX = 3000;
-const TREMOLO_MIN = 0, TREMOLO_MAX = 1;
-const LFO_FREQ = 20;
+const VIBRATO_MIN = 0, VIBRATO_MAX = 50;
+const INFLECTION_MIN = -0.5, INFLECTION_MAX = 0.5;
+const LFO_FREQ = 6;
 const TOTAL_ROUNDS = 5;
 const DEFAULT_AUDIO = 'dragon-studio-cat-meow-401729.mp3';
 const VOL_KEY = 'wavemeow_vol';
@@ -15,13 +15,13 @@ const VOL_KEY = 'wavemeow_vol';
 let audioCtx = null;
 let audioBuffer = null;
 let currentSource = null;
-let filterNode = null;
-let tremoloGainNode = null;
 let lfoNode = null;
 let lfoDepthNode = null;
 let masterGainNode = null;
 let listenInterval = null;
 let scoreRAF = null;
+let isLooping = false;
+let loopParams = null;
 
 function ensureCtx(vol) {
   if (!audioCtx) {
@@ -33,55 +33,70 @@ function ensureCtx(vol) {
 }
 
 function stopAudio() {
+  isLooping = false;
+  loopParams = null;
   if (lfoNode) { try { lfoNode.stop(); } catch (_) { /* */ } lfoNode = null; }
   if (currentSource) { try { currentSource.stop(); } catch (_) { /* */ } currentSource = null; }
 }
 
-function buildGraph(pitch, timbre, tremolo, loop) {
+function buildGraph(pitch, vibrato, inflection, loop) {
   stopAudio();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+  isLooping = loop;
+  loopParams = { pitch, vibrato, inflection };
+  startPlayback(pitch, vibrato, inflection);
+}
+
+function startPlayback(pitch, vibrato, inflection) {
+  if (currentSource) { try { currentSource.stop(); } catch (_) { /* */ } currentSource = null; }
+  if (lfoNode) { try { lfoNode.stop(); } catch (_) { /* */ } lfoNode = null; }
 
   const src = audioCtx.createBufferSource();
   src.buffer = audioBuffer;
-  src.loop = loop;
-  src.playbackRate.value = pitch;
+  src.loop = false;
 
-  filterNode = audioCtx.createBiquadFilter();
-  filterNode.type = 'peaking';
-  filterNode.Q.value = 5;
-  filterNode.gain.value = 15;
-  filterNode.frequency.value = timbre;
+  /* Pitch via detune — keeps playback speed constant */
+  const pitchCents = 1200 * Math.log2(pitch);
+  src.detune.value = pitchCents;
 
-  tremoloGainNode = audioCtx.createGain();
-  tremoloGainNode.gain.value = 1;
+  /* Inflection via playbackRate ramp (slide from neutral to target) */
+  const now = audioCtx.currentTime;
+  const dur = audioBuffer.duration;
+  src.playbackRate.setValueAtTime(1.0, now);
+  src.playbackRate.linearRampToValueAtTime(1.0 + inflection, now + dur);
 
+  /* Vibrato LFO (sine ~6 Hz) → GainNode (depth in cents) → source.detune */
   lfoNode = audioCtx.createOscillator();
   lfoNode.type = 'sine';
   lfoNode.frequency.value = LFO_FREQ;
 
   lfoDepthNode = audioCtx.createGain();
-  lfoDepthNode.gain.value = tremolo * 0.9;
+  lfoDepthNode.gain.value = vibrato;
 
   lfoNode.connect(lfoDepthNode);
-  lfoDepthNode.connect(tremoloGainNode.gain);
+  lfoDepthNode.connect(src.detune);
 
-  src.connect(filterNode);
-  filterNode.connect(tremoloGainNode);
-  tremoloGainNode.connect(masterGainNode);
+  src.connect(masterGainNode);
 
   lfoNode.start();
   src.start();
   currentSource = src;
-  src.onended = () => { if (currentSource === src) currentSource = null; };
+  src.onended = () => {
+    if (currentSource === src && isLooping && loopParams) {
+      startPlayback(loopParams.pitch, loopParams.vibrato, loopParams.inflection);
+    } else if (currentSource === src) {
+      currentSource = null;
+    }
+  };
 }
 
 /* ── Mapping helpers ── */
-function sliderToPitch(v)   { return PITCH_MIN   + (v / 1000) * (PITCH_MAX   - PITCH_MIN); }
-function sliderToTimbre(v)  { return TIMBRE_MIN  + (v / 1000) * (TIMBRE_MAX  - TIMBRE_MIN); }
-function sliderToTremolo(v) { return TREMOLO_MIN + (v / 1000) * (TREMOLO_MAX - TREMOLO_MIN); }
-function pitchToSlider(p)   { return Math.round((p - PITCH_MIN)   / (PITCH_MAX   - PITCH_MIN)   * 1000); }
-function timbreToSlider(t)  { return Math.round((t - TIMBRE_MIN)  / (TIMBRE_MAX  - TIMBRE_MIN)  * 1000); }
-function tremoloToSlider(g) { return Math.round((g - TREMOLO_MIN) / (TREMOLO_MAX - TREMOLO_MIN) * 1000); }
+function sliderToPitch(v)      { return PITCH_MIN      + (v / 1000) * (PITCH_MAX      - PITCH_MIN); }
+function sliderToVibrato(v)    { return VIBRATO_MIN    + (v / 1000) * (VIBRATO_MAX    - VIBRATO_MIN); }
+function sliderToInflection(v) { return INFLECTION_MIN + (v / 1000) * (INFLECTION_MAX - INFLECTION_MIN); }
+function pitchToSlider(p)      { return Math.round((p - PITCH_MIN)      / (PITCH_MAX      - PITCH_MIN)      * 1000); }
+function vibratoToSlider(v)    { return Math.round((v - VIBRATO_MIN)    / (VIBRATO_MAX    - VIBRATO_MIN)    * 1000); }
+function inflectionToSlider(i) { return Math.round((i - INFLECTION_MIN) / (INFLECTION_MAX - INFLECTION_MIN) * 1000); }
 
 function calcScore(target, player, min, max) {
   return Math.max(0, 100 - (Math.abs(target - player) / (max - min) * 100));
@@ -101,28 +116,28 @@ PetiteVue.createApp({
 
   currentRound: 0,
   targetPitch: 1,
-  targetTimbre: 1500,
-  targetTremolo: 0.5,
+  targetVibrato: 0,
+  targetInflection: 0,
 
   sliderPitch: 500,
-  sliderTimbre: 500,
-  sliderTremolo: 500,
+  sliderVibrato: 500,
+  sliderInflection: 500,
 
   lastPitch: 1,
-  lastTimbre: 1500,
-  lastTremolo: 0.5,
+  lastVibrato: 0,
+  lastInflection: 0,
 
   roundScores: [],
   scoreDisplay: '0%',
   scoreAnimating: false,
   roundResult: null,
   barPitch: '0%',
-  barTimbre: '0%',
-  barTremolo: '0%',
+  barVibrato: '0%',
+  barInflection: '0%',
 
   cmpPitch: 500,
-  cmpTimbre: 500,
-  cmpTremolo: 500,
+  cmpVibrato: 500,
+  cmpInflection: 500,
 
   countdown: '–',
   pulseIdle: true,
@@ -138,9 +153,9 @@ PetiteVue.createApp({
   /* ── Getters (computed-like) ── */
   get isLastRound()   { return this.currentRound + 1 >= TOTAL_ROUNDS; },
 
-  get tgtPitchPct()   { return (this.targetPitch   - PITCH_MIN)   / (PITCH_MAX   - PITCH_MIN); },
-  get tgtTimbrePct()  { return (this.targetTimbre  - TIMBRE_MIN)  / (TIMBRE_MAX  - TIMBRE_MIN); },
-  get tgtTremoloPct() { return (this.targetTremolo - TREMOLO_MIN) / (TREMOLO_MAX - TREMOLO_MIN); },
+  get tgtPitchPct()      { return (this.targetPitch      - PITCH_MIN)      / (PITCH_MAX      - PITCH_MIN); },
+  get tgtVibratoPct()    { return (this.targetVibrato    - VIBRATO_MIN)    / (VIBRATO_MAX    - VIBRATO_MIN); },
+  get tgtInflectionPct() { return (this.targetInflection - INFLECTION_MIN) / (INFLECTION_MAX - INFLECTION_MIN); },
 
   get finalAvg() {
     if (!this.roundScores.length) return 0;
@@ -210,12 +225,12 @@ PetiteVue.createApp({
   },
 
   startRound() {
-    this.targetPitch   = PITCH_MIN   + Math.random() * (PITCH_MAX   - PITCH_MIN);
-    this.targetTimbre  = TIMBRE_MIN  + Math.random() * (TIMBRE_MAX  - TIMBRE_MIN);
-    this.targetTremolo = TREMOLO_MIN + Math.random() * (TREMOLO_MAX - TREMOLO_MIN);
-    this.sliderPitch   = 500;
-    this.sliderTimbre  = 500;
-    this.sliderTremolo = 500;
+    this.targetPitch      = PITCH_MIN      + Math.random() * (PITCH_MAX      - PITCH_MIN);
+    this.targetVibrato    = VIBRATO_MIN    + Math.random() * (VIBRATO_MAX    - VIBRATO_MIN);
+    this.targetInflection = INFLECTION_MIN + Math.random() * (INFLECTION_MAX - INFLECTION_MIN);
+    this.sliderPitch      = 500;
+    this.sliderVibrato    = 500;
+    this.sliderInflection = 500;
     this.screen = 'listen';
     this.startListen();
   },
@@ -224,7 +239,7 @@ PetiteVue.createApp({
     this.pulseIdle   = false;
     this.listenWave  = true;
     ensureCtx(this.masterVol);
-    buildGraph(this.targetPitch, this.targetTimbre, this.targetTremolo, true);
+    buildGraph(this.targetPitch, this.targetVibrato, this.targetInflection, true);
 
     let remaining = 5;
     this.countdown = remaining;
@@ -247,23 +262,28 @@ PetiteVue.createApp({
     this.screen = 'tune';
     this.tuneWave = true;
     ensureCtx(this.masterVol);
-    const p  = sliderToPitch(this.sliderPitch);
-    const t  = sliderToTimbre(this.sliderTimbre);
-    const tr = sliderToTremolo(this.sliderTremolo);
-    buildGraph(p, t, tr, true);
+    const p   = sliderToPitch(this.sliderPitch);
+    const v   = sliderToVibrato(this.sliderVibrato);
+    const inf = sliderToInflection(this.sliderInflection);
+    buildGraph(p, v, inf, true);
   },
 
   onSliderInput() {
-    const p  = sliderToPitch(this.sliderPitch);
-    const t  = sliderToTimbre(this.sliderTimbre);
-    const tr = sliderToTremolo(this.sliderTremolo);
+    const p   = sliderToPitch(this.sliderPitch);
+    const v   = sliderToVibrato(this.sliderVibrato);
+    const inf = sliderToInflection(this.sliderInflection);
+    if (loopParams) {
+      loopParams.pitch = p;
+      loopParams.vibrato = v;
+      loopParams.inflection = inf;
+    }
     if (currentSource) {
-      currentSource.playbackRate.value = p;
-      if (filterNode)   filterNode.frequency.value = t;
-      if (lfoDepthNode) lfoDepthNode.gain.value = tr * 0.9;
+      /* Pitch & vibrato update in real-time; inflection applies next loop */
+      currentSource.detune.value = 1200 * Math.log2(p);
+      if (lfoDepthNode) lfoDepthNode.gain.value = v;
     } else {
       ensureCtx(this.masterVol);
-      buildGraph(p, t, tr, true);
+      buildGraph(p, v, inf, true);
     }
     this.tuneWave = true;
   },
@@ -272,28 +292,28 @@ PetiteVue.createApp({
     stopAudio();
     this.tuneWave = false;
 
-    const pP  = sliderToPitch(this.sliderPitch);
-    const pT  = sliderToTimbre(this.sliderTimbre);
-    const pTr = sliderToTremolo(this.sliderTremolo);
-    this.lastPitch   = pP;
-    this.lastTimbre  = pT;
-    this.lastTremolo = pTr;
+    const pP   = sliderToPitch(this.sliderPitch);
+    const pV   = sliderToVibrato(this.sliderVibrato);
+    const pInf = sliderToInflection(this.sliderInflection);
+    this.lastPitch      = pP;
+    this.lastVibrato    = pV;
+    this.lastInflection = pInf;
 
-    const ps  = calcScore(this.targetPitch,   pP,  PITCH_MIN,   PITCH_MAX);
-    const ts  = calcScore(this.targetTimbre,  pT,  TIMBRE_MIN,  TIMBRE_MAX);
-    const trs = calcScore(this.targetTremolo, pTr, TREMOLO_MIN, TREMOLO_MAX);
-    const result = { pitch: ps, timbre: ts, tremolo: trs, total: (ps + ts + trs) / 3 };
+    const ps   = calcScore(this.targetPitch,      pP,   PITCH_MIN,      PITCH_MAX);
+    const vs   = calcScore(this.targetVibrato,    pV,   VIBRATO_MIN,    VIBRATO_MAX);
+    const infs = calcScore(this.targetInflection, pInf, INFLECTION_MIN, INFLECTION_MAX);
+    const result = { pitch: ps, vibrato: vs, inflection: infs, total: (ps + vs + infs) / 3 };
 
     this.roundScores.push(result);
     this.roundResult = result;
 
-    this.cmpPitch   = pitchToSlider(pP);
-    this.cmpTimbre  = timbreToSlider(pT);
-    this.cmpTremolo = tremoloToSlider(pTr);
+    this.cmpPitch      = pitchToSlider(pP);
+    this.cmpVibrato    = vibratoToSlider(pV);
+    this.cmpInflection = inflectionToSlider(pInf);
 
-    this.barPitch   = '0%';
-    this.barTimbre  = '0%';
-    this.barTremolo = '0%';
+    this.barPitch      = '0%';
+    this.barVibrato    = '0%';
+    this.barInflection = '0%';
 
     this.playingTarget = false;
     this.playingYours  = false;
@@ -302,9 +322,9 @@ PetiteVue.createApp({
     this.screen = 'round-score';
 
     setTimeout(() => {
-      this.barPitch   = result.pitch   + '%';
-      this.barTimbre  = result.timbre  + '%';
-      this.barTremolo = result.tremolo + '%';
+      this.barPitch      = result.pitch      + '%';
+      this.barVibrato    = result.vibrato    + '%';
+      this.barInflection = result.inflection + '%';
     }, 250);
 
     this.animateScore(result.total);
@@ -344,7 +364,7 @@ PetiteVue.createApp({
     this.playDisabled  = true;
     this.playingTarget = true;
     ensureCtx(this.masterVol);
-    buildGraph(this.targetPitch, this.targetTimbre, this.targetTremolo, false);
+    buildGraph(this.targetPitch, this.targetVibrato, this.targetInflection, false);
     const ms = (audioBuffer ? audioBuffer.duration * 1000 : 2000) + 200;
     setTimeout(() => { this.playDisabled = false; this.playingTarget = false; }, ms);
   },
@@ -355,7 +375,7 @@ PetiteVue.createApp({
     this.playDisabled = true;
     this.playingYours = true;
     ensureCtx(this.masterVol);
-    buildGraph(this.lastPitch, this.lastTimbre, this.lastTremolo, false);
+    buildGraph(this.lastPitch, this.lastVibrato, this.lastInflection, false);
     const ms = (audioBuffer ? audioBuffer.duration * 1000 : 2000) + 200;
     setTimeout(() => { this.playDisabled = false; this.playingYours = false; }, ms);
   },

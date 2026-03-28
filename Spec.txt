@@ -2,7 +2,7 @@
 
 遊戲概述 (Overview)
 
-這是一款基於純網頁前端技術的聽覺解謎遊戲。遊戲將測試玩家對聲音細節（音高、音色、呼嚕顫音）的敏銳度。玩家需要聆聽一段隨機生成的「目標貓叫聲」，然後利用三個滑桿（Sliders）將原始的貓叫聲調整至與目標聲音一致。遊戲共進行 5 個回合，最後計算總分。
+這是一款基於純網頁前端技術的聽覺解謎遊戲，強烈建議玩家佩戴耳機遊玩。遊戲將測試玩家對聲音細節（基本音高、撒嬌抖音、語氣起伏）的敏銳度。玩家需要聆聽一段隨機生成的「目標貓叫聲」，然後利用三個滑桿（Sliders）將原始的貓叫聲調整至與目標聲音完全重合。遊戲共進行 5 個回合，每回合滿分 10 分，總分 50 分。
 
 技術棧 (Tech Stack)
 
@@ -16,53 +16,56 @@
 
 AudioContext
 
-AudioBufferSourceNode (用於載入和播放音訊檔，不循環播放)
+AudioBufferSourceNode (用於載入和播放音訊檔，控制基礎音高、語氣起伏與接收抖音)
 
-BiquadFilterNode (用於控制音色 Timbre)
+OscillatorNode (新增：作為 LFO 低頻振盪器，產生音高震動)
 
-OscillatorNode (新增：作為 LFO 低頻振盪器，產生震動感)
-
-GainNode (新增：用於接收 LFO 訊號以產生 Tremolo 呼嚕顫音效果)
+GainNode (新增：控制 LFO 的震動幅度 Depth，連接至 Source 的 detune)
 
 GainNode (用於全域主音量 Master Volume)
 
 核心音訊物理對射 (Audio Mechanics Mapping)
 
-音頻節點連接順序：Source ➔ Filter (Timbre) ➔ Tremolo Gain (受 LFO 控制) ➔ Master Gain (Volume) ➔ Destination
+音頻節點連接順序：LFO Oscillator ➔ LFO Gain (Depth) ➔ Source.detune。然後 Source (Pitch & Inflection) ➔ Master Gain (Volume) ➔ Destination
 
-基礎聲源 (Base Sound)： 系統預設載入 dragon-studio-cat-meow-401729.mp3（或使用玩家上傳的音檔）。播放時設定 loop = false (播放一次即停)。
+基礎聲源 (Base Sound)： 系統預設載入 dragon-studio-cat-meow-401729.mp3（或使用玩家上傳的音檔）。播放時視遊戲狀態啟用循環播放 (Loop)。
 
-變數 1：Pitch (音高)
+變數 1：Pitch (基本音高)
 
-控制對象： AudioBufferSourceNode.playbackRate.value
+控制對象： AudioBufferSourceNode.playbackRate 的起始值。
+
+物理意義： 決定貓咪的體型與聲帶基頻（大貓或幼貓）。
 
 數值範圍： 0.5 (最低音/大叔貓) 到 2.0 (最高音/幼貓)
+要保持speed不變
 
-變數 2：Timbre (音色/共鳴)
+變數 2：Vibrato (撒嬌抖音 / 音高顫動) - 終極修正：取代環境濾波，專注於貓咪發聲技巧
 
-控制對象： BiquadFilterNode
+控制對象： 連接至 AudioBufferSourceNode.detune 的 LFO 系統。
 
-節點設定： type = 'peaking', Q.value = 5, gain.value = 15
+節點設定： 建立一個 OscillatorNode (type = 'sine', frequency = 約 6Hz，模擬自然顫音速度)，連接至一個 GainNode (控制 Depth)，再連接至 Source 的 detune。
 
-控制參數： BiquadFilterNode.frequency.value
+控制參數： LFO GainNode 的 gain.value (即震動幅度)。
 
-數值範圍： 300 (Hz, 沉悶胸腔共鳴) 到 3000 (Hz, 尖銳鼻腔共鳴)
+物理意義： 決定貓咪叫聲中的顫音程度，模擬平靜直率或強烈撒嬌/肉緊的情緒。
 
-變數 3：Tremolo (呼嚕顫音 / 震動感)
+數值範圍： 0 (平穩無抖音) 到 50 (強烈撒嬌抖音，單位為 Cents 音分)。
 
-控制對象： LFO (Low Frequency Oscillator) 調變專用的 GainNode。
+變數 3：Inflection (語氣起伏 / 滑音)
 
-節點設定： 建立一個 OscillatorNode (type = 'sine', frequency = 約 15Hz - 25Hz，模擬貓咪呼嚕聲的頻率)，將其連接至負責 Tremolo 的 GainNode.gain 參數上。
+控制對象： AudioBufferSourceNode.playbackRate 的動態變化 (利用 linearRampToValueAtTime)。
 
-控制參數： LFO 的強度 (Depth / Tremolo Gain 的調變幅度)。
+物理意義： 改變貓咪叫聲結尾的音調走向，模擬不同的「情緒」或「語氣」。
 
-數值範圍： 0 (平滑純淨的叫聲，完全無震動) 到 1 (強烈的呼嚕震動感 / 撒嬌發抖聲)
+控制方式： 播放開始時為 Base Pitch，在聲音結束時平滑過渡到 (Base Pitch + Inflection 數值)。
+
+數值範圍： -0.5 (尾音嚴重下沉/低落/警告) 到 0.5 (尾音強烈上揚/好奇/撒嬌)，0 為無起伏(平穩原始語氣)。
 
 遊戲流程 (Game Flow)
 
 全域 UI 元件 (隨時可用)
 
-Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Destination 前的 Master GainNode，預設為 0.5。讓玩家隨時調整整體噪音大小。
+Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Destination 前的 Master GainNode，預設為 0.5。系統需透過 localStorage 記錄此數值 (Save 低)。
 
 狀態 0：初始化 (Init)
 
@@ -74,25 +77,25 @@ Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Dest
 
 狀態 1：聆聽階段 (Phase: Listen) - 重複 5 圈
 
-系統使用 Math.random() 為 Pitch, Timbre, Tremolo 隨機生成一組目標數值 (Target Values)。
+系統使用 Math.random() 為 Pitch, Vibrato, Inflection 隨機生成一組目標數值 (Target Values)。
 
 隱藏/禁用三個玩家控制滑桿。
 
 畫面顯示「Listen to the Target... (正在聆聽目標聲音)」。
 
-應用 Target Values 播放聲音，持續 5 秒鐘。
+應用 Target Values 循環播放 (Loop) 聲音，持續 5 秒鐘。(註：由於 Inflection 需配合每次發聲的週期，每次 Loop 必須重新觸發 Ramp 控制)。
 
 5 秒後，停止播放目標聲音，自動進入狀態 2。
 
 狀態 2：調音還原階段 (Phase: Tune)
 
-畫面顯示 3 個 <input type="range"> 滑桿 (Pitch, Timbre, Tremolo)。
+畫面顯示 3 個滑桿 (Pitch, Vibrato, Inflection)。
 
-滑桿初始位置應隨機放置，或預設在正中間。
+滑桿初始位置應隨機放置，或預設在正中間 (Inflection 與 Vibrato 的預設應為 0)。
 
-重要：不能在介面上顯示具體的 Hz、比例或倍速數字，必須讓玩家純靠聽覺判斷。
+重要：不能在介面上顯示具體的數值，必須讓玩家純靠聽覺判斷。
 
-玩家拖動滑桿 (oninput 事件) 時，實時 (Real-time) 改變音訊節點的參數，並持續循環播放 (Loop) 玩家目前設定的聲音。
+進入此階段後，系統會 持續不斷循環播放 (Constantly Loop) 玩家目前的設定聲音。玩家拖動滑桿 (oninput 事件) 時，實時 (Real-time) 改變音訊節點的參數。
 
 玩家認為調整完畢後，點擊「Confirm (確認)」按鈕。
 
@@ -100,38 +103,42 @@ Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Dest
 
 狀態 3：回合結算 (Phase: Round Score)
 
-計算該回合分數。
+計算該回合分數 (滿分 10 分)。
 
 視覺對比動畫： 在玩家的滑桿上，以霓虹綠色標示出 Target 的正確位置，直觀顯示誤差。
 
-分數揭曉動畫： 顯示該回合準確度百分比 (數字動態遞增至最終結果)。
+分數揭曉動畫： 顯示該回合獲得的分數 (數字動態遞增至最終結果，例如 8.5 / 10)。
 
-對比播放機制 (防止嘈雜)： 廢除 Hold/Release 自動發聲設計。改為提供兩個獨立的按鈕 「Play Target」 與 「Play Your Tune」。結算畫面預設為靜音，玩家必須主動點擊才會播放對應聲音 一次，絕不自動循環或重疊播放，保持安靜。
+對比播放機制 (防止嘈雜)： 提供兩個獨立的按鈕 「Play Target」 與 「Play Your Tune」。結算畫面預設為靜音，玩家必須主動點擊才會播放對應聲音 一次，絕不自動循環或重疊播放，保持安靜。
 
 點擊「Next Round」進入下一回合。
 
 狀態 4：遊戲結束 (Phase: Game Over)
 
-顯示 5 個回合的總平均分與評價。
+顯示 5 個回合的 總分 (滿分 50 分) 與評價。
 
 提供「Play Again」按鈕。
 
 UI/UX 設計要求 (UI/UX Design)
 
-主音量控制： 需獨立於遊戲謎題之外，清晰標示為系統音量。defalut 50%, 要save低
+主音量控制： 需獨立於遊戲謎題之外，清晰標示為系統音量。預設 50%，需使用 localStorage 儲存玩家設定。
 
 按鈕狀態： 點擊 Play 播放聲音時，按鈕應有視覺回饋（例如發光或變色），播放完畢後恢復，避免玩家狂按重疊播放。
 
 計分演算法 (Scoring Algorithm)
 
-計算單項誤差：
+每回合的各個變數滿分為 10 分。
 
-Pitch Score = 100 - ( Math.abs(T_pitch - P_pitch) / (2.0 - 0.5) * 100 )
+計算單項得分：
 
-Timbre Score = 100 - ( Math.abs(T_timbre - P_timbre) / (3000 - 300) * 100 )
+Pitch Score = 10 - ( Math.abs(T_pitch - P_pitch) / (2.0 - 0.5) * 10 )
 
-Tremolo Score = 100 - ( Math.abs(T_tremolo - P_tremolo) / (1.0 - 0.0) * 100 )
+Vibrato Score = 10 - ( Math.abs(T_vibrato - P_vibrato) / (50 - 0) * 10 )
 
-確保分數不為負數： 若 < 0 則設為 0。
+Inflection Score = 10 - ( Math.abs(T_inflection - P_inflection) / (0.5 - -0.5) * 10 )
 
-回合總分： (Pitch Score + Timbre Score + Tremolo Score) / 3 (保留兩位小數)
+確保分數不為負數： 若某項 Score < 0，則設為 0。
+
+回合總分 (Round Score)： (Pitch Score + Vibrato Score + Inflection Score) / 3 (保留兩位小數，最高 10 分)。
+
+遊戲總分 (Total Score)： 5 個回合的 Round Score 總和 (保留兩位小數，最高 50 分)。

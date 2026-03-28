@@ -119,7 +119,7 @@
         <div class="slider-row">
           <div class="slider-header">
             <span class="slider-name pitch-col">☁️ Pitch</span>
-            <span class="slider-hint">Speed / Frequency</span>
+            <span class="slider-hint">Base frequency / Detune</span>
           </div>
           <div class="slider-track-wrap">
             <input id="slider-pitch" type="range" class="kawaii-slider" min="0" max="1000" step="1"
@@ -128,30 +128,30 @@
             <div class="emoji-thumb" :style="{ '--pct': sliderPitch / 1000 }">☁️</div>
           </div>
         </div>
-        <!-- Timbre -->
+        <!-- Vibrato -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name timbre-col">🩷 Timbre</span>
-            <span class="slider-hint">Brightness / Tone colour</span>
+            <span class="slider-name vibrato-col">🎵 Vibrato</span>
+            <span class="slider-hint">Trembling / Purr intensity</span>
           </div>
           <div class="slider-track-wrap">
-            <input id="slider-timbre" type="range" class="kawaii-slider" min="0" max="1000" step="1"
-                   :value="sliderTimbre"
-                   @input="sliderTimbre = +$event.target.value; onSliderInput()">
-            <div class="emoji-thumb" :style="{ '--pct': sliderTimbre / 1000 }">🩷</div>
+            <input id="slider-vibrato" type="range" class="kawaii-slider" min="0" max="1000" step="1"
+                   :value="sliderVibrato"
+                   @input="sliderVibrato = +$event.target.value; onSliderInput()">
+            <div class="emoji-thumb" :style="{ '--pct': sliderVibrato / 1000 }">🎵</div>
           </div>
         </div>
-        <!-- Tremolo -->
+        <!-- Inflection -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name tremolo-col">🐾 Tremolo</span>
-            <span class="slider-hint">Wobble depth</span>
+            <span class="slider-name inflection-col">🐾 Inflection</span>
+            <span class="slider-hint">Tail pitch slide ↗↘</span>
           </div>
           <div class="slider-track-wrap">
-            <input id="slider-tremolo" type="range" class="kawaii-slider" min="0" max="1000" step="1"
-                   :value="sliderTremolo"
-                   @input="sliderTremolo = +$event.target.value; onSliderInput()">
-            <div class="emoji-thumb" :style="{ '--pct': sliderTremolo / 1000 }">🐾</div>
+            <input id="slider-inflection" type="range" class="kawaii-slider" min="0" max="1000" step="1"
+                   :value="sliderInflection"
+                   @input="sliderInflection = +$event.target.value; onSliderInput()">
+            <div class="emoji-thumb" :style="{ '--pct': sliderInflection / 1000 }">🐾</div>
           </div>
         </div>
       </div>
@@ -187,15 +187,15 @@
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barPitch }"></div></div>
           <div class="score-bar-pct">{{ roundResult ? roundResult.pitch.toFixed(1) + '%' : '--' }}</div>
         </div>
-        <div class="score-bar-row timbre-row">
-          <div class="score-bar-lbl">Timbre</div>
-          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barTimbre }"></div></div>
-          <div class="score-bar-pct">{{ roundResult ? roundResult.timbre.toFixed(1) + '%' : '--' }}</div>
+        <div class="score-bar-row vibrato-row">
+          <div class="score-bar-lbl">Vibrato</div>
+          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barVibrato }"></div></div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.vibrato.toFixed(1) + '%' : '--' }}</div>
         </div>
-        <div class="score-bar-row tremolo-row">
-          <div class="score-bar-lbl">Tremolo</div>
-          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barTremolo }"></div></div>
-          <div class="score-bar-pct">{{ roundResult ? roundResult.tremolo.toFixed(1) + '%' : '--' }}</div>
+        <div class="score-bar-row inflection-row">
+          <div class="score-bar-lbl">Inflection</div>
+          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barInflection }"></div></div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.inflection.toFixed(1) + '%' : '--' }}</div>
         </div>
       </div>
 
@@ -216,28 +216,28 @@
             <div class="target-marker" :style="{ '--pct': tgtPitchPct }"></div>
           </div>
         </div>
-        <!-- Timbre compare -->
+        <!-- Vibrato compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name timbre-col">🩷 Timbre</span>
+            <span class="slider-name vibrato-col">🎵 Vibrato</span>
             <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input id="cmp-timbre" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpTimbre" tabindex="-1">
-            <div class="emoji-thumb" :style="{ '--pct': cmpTimbre / 1000 }">🩷</div>
-            <div class="target-marker" :style="{ '--pct': tgtTimbrePct }"></div>
+            <input id="cmp-vibrato" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpVibrato" tabindex="-1">
+            <div class="emoji-thumb" :style="{ '--pct': cmpVibrato / 1000 }">🎵</div>
+            <div class="target-marker" :style="{ '--pct': tgtVibratoPct }"></div>
           </div>
         </div>
-        <!-- Tremolo compare -->
+        <!-- Inflection compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name tremolo-col">🐾 Tremolo</span>
+            <span class="slider-name inflection-col">🐾 Inflection</span>
             <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input id="cmp-tremolo" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpTremolo" tabindex="-1">
-            <div class="emoji-thumb" :style="{ '--pct': cmpTremolo / 1000 }">🐾</div>
-            <div class="target-marker" :style="{ '--pct': tgtTremoloPct }"></div>
+            <input id="cmp-inflection" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpInflection" tabindex="-1">
+            <div class="emoji-thumb" :style="{ '--pct': cmpInflection / 1000 }">🐾</div>
+            <div class="target-marker" :style="{ '--pct': tgtInflectionPct }"></div>
           </div>
         </div>
       </div>

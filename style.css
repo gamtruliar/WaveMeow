@@ -19,8 +19,8 @@
   --muted:       #a08068;
   --card-border: rgba(200,160,120,0.45);
   --pitch-col:   #5ba8d4;
-  --timbre-col:  #c48a5a;
-  --tremolo-col: #e8a84c;
+  --vibrato-col:    #c48a5a;
+  --inflection-col: #e8a84c;
   --green-neon:  #5cc77a;
   --accent:      #d4875c;
   --accent2:     #c06a3e;
@@ -235,8 +235,8 @@ h1 {
 .slider-header { display: flex; justify-content: space-between; align-items: center; }
 .slider-name { font-size: 0.78rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
 .slider-name.pitch-col   { color: var(--pitch-col); }
-.slider-name.timbre-col  { color: var(--timbre-col); }
-.slider-name.tremolo-col { color: var(--tremolo-col); }
+.slider-name.vibrato-col    { color: var(--vibrato-col); }
+.slider-name.inflection-col { color: var(--inflection-col); }
 .slider-hint { font-size: 0.67rem; color: var(--muted); font-weight: 700; }
 
 .slider-track-wrap { position: relative; height: 30px; display: flex; align-items: center; }
@@ -253,8 +253,8 @@ input[type="range"].kawaii-slider::-moz-range-thumb {
   width: 30px; height: 30px; border-radius: 50%; background: transparent; border: none; cursor: grab;
 }
 input#slider-pitch.kawaii-slider,   input#cmp-pitch.kawaii-slider   { background: linear-gradient(to right, #c0dff0, var(--pitch-col)); }
-input#slider-timbre.kawaii-slider,  input#cmp-timbre.kawaii-slider  { background: linear-gradient(to right, #f0d8b8, var(--timbre-col)); }
-input#slider-tremolo.kawaii-slider, input#cmp-tremolo.kawaii-slider { background: linear-gradient(to right, #fff0c0, var(--tremolo-col)); }
+input#slider-vibrato.kawaii-slider,    input#cmp-vibrato.kawaii-slider    { background: linear-gradient(to right, #f0d8b8, var(--vibrato-col)); }
+input#slider-inflection.kawaii-slider, input#cmp-inflection.kawaii-slider { background: linear-gradient(to right, #fff0c0, var(--inflection-col)); }
 
 /* Emoji thumb — position driven by CSS custom property --pct (0‥1) */
 .emoji-thumb {
@@ -281,11 +281,11 @@ input#slider-tremolo.kawaii-slider, input#cmp-tremolo.kawaii-slider { background
 .score-bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 0.85s cubic-bezier(0.22,1,0.36,1); }
 .score-bar-pct { font-size: 0.7rem; font-weight: 800; width: 42px; text-align: right; flex-shrink: 0; }
 .score-bar-row.pitch-row   .score-bar-lbl,.score-bar-row.pitch-row   .score-bar-pct { color: var(--pitch-col); }
-.score-bar-row.timbre-row  .score-bar-lbl,.score-bar-row.timbre-row  .score-bar-pct { color: var(--timbre-col); }
-.score-bar-row.tremolo-row .score-bar-lbl,.score-bar-row.tremolo-row .score-bar-pct { color: var(--tremolo-col); }
+.score-bar-row.vibrato-row    .score-bar-lbl,.score-bar-row.vibrato-row    .score-bar-pct { color: var(--vibrato-col); }
+.score-bar-row.inflection-row .score-bar-lbl,.score-bar-row.inflection-row .score-bar-pct { color: var(--inflection-col); }
 .score-bar-row.pitch-row   .score-bar-fill { background: linear-gradient(to right,#c0dff0,var(--pitch-col)); }
-.score-bar-row.timbre-row  .score-bar-fill { background: linear-gradient(to right,#f0d8b8,var(--timbre-col)); }
-.score-bar-row.tremolo-row .score-bar-fill { background: linear-gradient(to right,#fff0c0,var(--tremolo-col)); }
+.score-bar-row.vibrato-row    .score-bar-fill { background: linear-gradient(to right,#f0d8b8,var(--vibrato-col)); }
+.score-bar-row.inflection-row .score-bar-fill { background: linear-gradient(to right,#fff0c0,var(--inflection-col)); }
 
 /* ── Compare ── */
 .compare-section-label { font-size: 0.6rem; font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin: 16px 0 10px; }
