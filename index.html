@@ -1,965 +1,308 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sonic Palette: Meow Edition</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --pink:    #ffb3cb;
-      --pink2:   #ff85a1;
-      --purple:  #c07bff;
-      --purple2: #a04fe0;
-      --blue:    #8ecfff;
-      --yellow:  #ffd97a;
-      --mint:    #7dffc4;
-      --cream:   #fff8f0;
-      --cream2:  #fff0e8;
-      --text:    #6b4c7a;
-      --muted:   #b09ac0;
-      --card-border: #f0c0d8;
-      --pitch-col:  #6ec6ff;
-      --timbre-col: #c07bff;
-      --grit-col:   #ffcd6b;
-      --green-neon: #39ff6e;
-    }
-
-    body {
-      min-height: 100vh;
-      background: linear-gradient(160deg, #ffd6e8 0%, #ffe8d6 30%, #e8d6ff 65%, #d6e8ff 100%);
-      font-family: 'Nunito', sans-serif;
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 24px 16px 80px;
-      overflow-x: hidden;
-      position: relative;
-    }
-    body::before, body::after {
-      content: '';
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(60px);
-      opacity: 0.35;
-      pointer-events: none;
-      z-index: 0;
-    }
-    body::before {
-      width: 500px; height: 300px;
-      background: radial-gradient(circle, #ffd6f7, transparent);
-      top: -60px; left: -80px;
-    }
-    body::after {
-      width: 420px; height: 280px;
-      background: radial-gradient(circle, #d6e8ff, transparent);
-      bottom: -40px; right: -60px;
-    }
-
-    /* ── Master Volume ── */
-    .master-vol {
-      position: fixed; bottom: 18px; right: 18px;
-      background: rgba(255,255,255,0.8);
-      backdrop-filter: blur(10px);
-      border-radius: 20px; border: 1.5px solid var(--card-border);
-      padding: 8px 14px;
-      display: flex; align-items: center; gap: 8px;
-      z-index: 100;
-      box-shadow: 0 4px 16px rgba(192,123,255,0.15);
-    }
-    .master-vol-label {
-      font-size: 0.6rem; font-weight: 900; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--muted);
-    }
-    #master-vol-slider {
-      -webkit-appearance: none; appearance: none;
-      width: 76px; height: 4px; border-radius: 2px;
-      background: linear-gradient(to right, var(--purple), var(--pink));
-      outline: none; cursor: pointer;
-    }
-    #master-vol-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px; border-radius: 50%;
-      background: #fff; border: 2px solid var(--purple);
-      box-shadow: 0 0 6px rgba(192,123,255,0.5); cursor: pointer;
-    }
-    #master-vol-slider::-moz-range-thumb {
-      width: 14px; height: 14px; border-radius: 50%;
-      background: #fff; border: 2px solid var(--purple); cursor: pointer;
-    }
-
-    /* ── Header ── */
-    .title-wrap { position: relative; z-index: 1; text-align: center; margin-bottom: 4px; }
-    h1 {
-      font-family: 'Bubblegum Sans', cursive;
-      font-size: clamp(2.4rem, 8vw, 3.6rem);
-      background: linear-gradient(135deg, #ff9ecb 0%, #c07bff 45%, #6ec6ff 85%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 2px 0 rgba(255,255,255,0.9)) drop-shadow(0 4px 10px rgba(192,123,255,0.3));
-    }
-    .subtitle {
-      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.22em;
-      text-transform: uppercase; color: var(--muted); margin-top: 2px;
-    }
-    .sparkles {
-      display: flex; gap: 6px; justify-content: center;
-      font-size: 1.1rem; margin: 8px 0 18px;
-      filter: drop-shadow(0 0 4px rgba(255,180,80,0.4));
-    }
-
-    /* ── Screens ── */
-    .screen {
-      display: none; flex-direction: column; align-items: center;
-      gap: 20px; width: 100%; max-width: 500px; position: relative; z-index: 1;
-    }
-    .screen.active { display: flex; }
-
-    /* ── Round dots ── */
-    .round-indicator { display: flex; gap: 10px; justify-content: center; align-items: center; }
-    .round-dot { font-size: 1.3rem; transition: transform 0.25s, filter 0.25s; filter: grayscale(1) opacity(0.35); }
-    .round-dot.done   { filter: grayscale(0) opacity(0.7); }
-    .round-dot.active { filter: grayscale(0) opacity(1); transform: scale(1.4); }
-
-    /* ── Card ── */
-    .card {
-      width: 100%;
-      background: var(--cream);
-      border-radius: 28px;
-      border: 2.5px solid var(--card-border);
-      padding: 28px 28px 24px;
-      position: relative;
-      box-shadow: 0 8px 40px rgba(192,123,255,0.13), 0 2px 0 rgba(255,255,255,0.9) inset;
-    }
-    /* Cat ears */
-    .card::before, .card::after {
-      content: '';
-      position: absolute; top: -17px;
-      width: 36px; height: 36px;
-      background: var(--cream);
-      border: 2.5px solid var(--card-border);
-      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    }
-    .card::before { left: 30px;  transform: rotate(-8deg); }
-    .card::after  { right: 30px; transform: rotate(8deg); }
-    /* Lace ring */
-    .card-lace {
-      position: absolute; inset: -9px;
-      border-radius: 34px;
-      border: 3px dashed rgba(240,192,216,0.5);
-      pointer-events: none; z-index: -1;
-    }
-
-    /* Decorative stickers */
-    .deco {
-      position: absolute; pointer-events: none; font-size: 1.05rem;
-      filter: drop-shadow(0 1px 3px rgba(0,0,0,0.08));
-    }
-    .deco-tl  { top: 10px;  left: 10px;  transform: rotate(-15deg); }
-    .deco-tr  { top: 10px;  right: 10px; transform: rotate(12deg); }
-    .deco-bl  { bottom: 12px; left: 12px; transform: rotate(10deg); }
-    .deco-br  { bottom: 12px; right: 12px; transform: rotate(-8deg); }
-
-    /* ── Phase labels ── */
-    .phase-label {
-      font-size: 0.63rem; font-weight: 900; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
-    }
-    .phase-title {
-      font-family: 'Bubblegum Sans', cursive;
-      font-size: 1.85rem;
-      background: linear-gradient(135deg, var(--pink2), var(--purple));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      line-height: 1.1; margin-bottom: 2px;
-    }
-
-    /* ── Upload ── */
-    .upload-zone {
-      border: 2.5px dashed var(--card-border);
-      border-radius: 16px; padding: 20px;
-      text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative; background: var(--cream2);
-    }
-    .upload-zone:hover { border-color: var(--purple); background: rgba(192,123,255,0.04); }
-    .upload-zone input[type="file"] {
-      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-    }
-    .upload-icon { font-size: 1.9rem; margin-bottom: 6px; }
-    .upload-label { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
-    .upload-label span { color: var(--purple); }
-    .file-name { font-size: 0.72rem; color: var(--purple); margin-top: 5px; min-height: 1.1em; font-weight: 700; }
-    #default-status {
-      font-size: 0.78rem; font-weight: 700;
-      text-align: center; min-height: 1.3em; margin-bottom: 14px; color: var(--muted);
-    }
-
-    /* ── Buttons ── */
-    .btn {
-      border: none; cursor: pointer; border-radius: 50px;
-      font-family: 'Nunito', sans-serif; font-weight: 800;
-      letter-spacing: 0.05em; text-transform: uppercase;
-      transition: all 0.18s; outline: none;
-      padding: 13px 30px; font-size: 0.86rem;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #ffb3cb 0%, #c07bff 50%, #8ecfff 100%);
-      background-size: 200% 200%; background-position: 0% 50%;
-      color: #fff; box-shadow: 0 4px 20px rgba(192,123,255,0.38);
-    }
-    .btn-primary:hover { background-position: 100% 50%; box-shadow: 0 6px 28px rgba(192,123,255,0.55); transform: translateY(-2px); }
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; transform: none; }
-    .btn-alt {
-      background: rgba(255,255,255,0.85); color: var(--purple);
-      border: 2px solid var(--card-border);
-      box-shadow: 0 3px 12px rgba(192,123,255,0.1);
-    }
-    .btn-alt:hover { border-color: var(--purple); background: rgba(192,123,255,0.07); }
-    .btn-alt.playing { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 4px 18px rgba(192,123,255,0.45); }
-    .btn-alt:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-green {
-      background: rgba(255,255,255,0.85); color: #28a84e;
-      border: 2px solid rgba(57,255,110,0.45);
-      box-shadow: 0 3px 12px rgba(57,255,110,0.08);
-    }
-    .btn-green:hover { border-color: var(--green-neon); background: rgba(57,255,110,0.07); }
-    .btn-green.playing { background: #39ff6e; color: #fff; border-color: #39ff6e; box-shadow: 0 4px 18px rgba(57,255,110,0.45); }
-    .btn-green:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-danger {
-      background: linear-gradient(135deg, #ff6bab, #c07bff);
-      color: #fff; box-shadow: 0 4px 20px rgba(255,107,171,0.38);
-    }
-    .btn-danger:hover { box-shadow: 0 6px 28px rgba(255,107,171,0.55); transform: translateY(-2px); }
-
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-
-    /* ── Pulse ── */
-    .pulse-wrap { display: flex; justify-content: center; padding: 10px 0; }
-    .pulse {
-      width: 68px; height: 68px; border-radius: 50%;
-      background: radial-gradient(circle, rgba(192,123,255,0.22) 0%, transparent 70%);
-      border: 2.5px solid var(--purple);
-      box-shadow: 0 0 24px rgba(192,123,255,0.35);
-      animation: pulse-anim 1.3s ease-in-out infinite;
-      display: flex; align-items: center; justify-content: center; font-size: 1.9rem;
-    }
-    @keyframes pulse-anim {
-      0%,100% { transform: scale(1); box-shadow: 0 0 20px rgba(192,123,255,0.28); }
-      50%      { transform: scale(1.22); box-shadow: 0 0 44px rgba(192,123,255,0.55); }
-    }
-    .pulse.idle { animation: none; opacity: 0.28; }
-    .countdown {
-      font-family: 'Bubblegum Sans', cursive;
-      font-size: 3.2rem; color: var(--purple);
-      text-align: center; min-height: 1.2em;
-      text-shadow: 0 0 20px rgba(192,123,255,0.38);
-    }
-
-    /* ── Waveform ── */
-    .waveform { display: flex; gap: 4px; align-items: center; justify-content: center; height: 36px; margin: 6px 0; }
-    .waveform-bar {
-      width: 4px; border-radius: 2px; opacity: 0.18;
-      background: linear-gradient(to top, var(--pink2), var(--purple));
-    }
-    .waveform.playing .waveform-bar { opacity: 0.82; animation: wave 0.45s ease-in-out infinite alternate; }
-    .waveform-bar:nth-child(1){height:8px; animation-delay:0s}
-    .waveform-bar:nth-child(2){height:16px;animation-delay:.07s}
-    .waveform-bar:nth-child(3){height:26px;animation-delay:.14s}
-    .waveform-bar:nth-child(4){height:20px;animation-delay:.21s}
-    .waveform-bar:nth-child(5){height:12px;animation-delay:.28s}
-    .waveform-bar:nth-child(6){height:30px;animation-delay:.35s}
-    .waveform-bar:nth-child(7){height:18px;animation-delay:.42s}
-    .waveform-bar:nth-child(8){height:10px;animation-delay:.07s}
-    @keyframes wave { 0%{height:4px} 100%{height:28px} }
-
-    /* ── Sliders ── */
-    .sliders-wrap { display: flex; flex-direction: column; gap: 22px; width: 100%; }
-    .slider-row { display: flex; flex-direction: column; gap: 8px; }
-    .slider-header { display: flex; justify-content: space-between; align-items: center; }
-    .slider-name { font-size: 0.78rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
-    .slider-name.pitch-color  { color: var(--pitch-col); }
-    .slider-name.timbre-color { color: var(--timbre-col); }
-    .slider-name.grit-color   { color: var(--grit-col); }
-    .slider-hint { font-size: 0.67rem; color: var(--muted); font-weight: 700; }
-
-    .slider-track-wrap { position: relative; height: 30px; display: flex; align-items: center; }
-
-    input[type="range"].kawaii-slider {
-      -webkit-appearance: none; appearance: none;
-      width: 100%; height: 8px; border-radius: 4px;
-      outline: none; cursor: pointer; position: relative; z-index: 1;
-    }
-    input[type="range"].kawaii-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 30px; height: 30px; border-radius: 50%;
-      background: transparent; border: none; cursor: grab;
-    }
-    input[type="range"].kawaii-slider::-webkit-slider-thumb:active { cursor: grabbing; }
-    input[type="range"].kawaii-slider::-moz-range-thumb {
-      width: 30px; height: 30px; border-radius: 50%;
-      background: transparent; border: none; cursor: grab;
-    }
-    input#slider-pitch.kawaii-slider,  input#cmp-pitch.kawaii-slider  { background: linear-gradient(to right, #b8e4ff, var(--pitch-col)); }
-    input#slider-timbre.kawaii-slider, input#cmp-timbre.kawaii-slider { background: linear-gradient(to right, #e0b8ff, var(--timbre-col)); }
-    input#slider-grit.kawaii-slider,   input#cmp-grit.kawaii-slider   { background: linear-gradient(to right, #fff0b8, var(--grit-col)); }
-
-    .emoji-thumb {
-      position: absolute;
-      top: 50%; transform: translate(-50%, -50%);
-      font-size: 1.55rem; pointer-events: none; z-index: 3;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-      line-height: 1;
-    }
-
-    /* ── Score ── */
-    .score-big {
-      font-family: 'Bubblegum Sans', cursive;
-      font-size: 4.5rem; text-align: center; line-height: 1;
-      background: linear-gradient(135deg, var(--pink2), var(--purple));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 2px 8px rgba(192,123,255,0.28));
-    }
-    .score-big.animating {
-      background: linear-gradient(135deg, #ff6bab, #ffd97a);
-      -webkit-background-clip: text; background-clip: text;
-    }
-    .score-subtext { font-size: 0.73rem; color: var(--muted); text-align: center; margin-top: 4px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-
-    .score-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-    .score-bar-row { display: flex; align-items: center; gap: 10px; }
-    .score-bar-lbl { font-size: 0.63rem; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; width: 52px; flex-shrink: 0; }
-    .score-bar-track { flex: 1; height: 7px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; }
-    .score-bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 0.85s cubic-bezier(0.22,1,0.36,1); }
-    .score-bar-pct { font-size: 0.7rem; font-weight: 800; width: 42px; text-align: right; flex-shrink: 0; }
-    .score-bar-row.pitch-color  .score-bar-lbl,
-    .score-bar-row.pitch-color  .score-bar-pct { color: var(--pitch-col); }
-    .score-bar-row.timbre-color .score-bar-lbl,
-    .score-bar-row.timbre-color .score-bar-pct { color: var(--timbre-col); }
-    .score-bar-row.grit-color   .score-bar-lbl,
-    .score-bar-row.grit-color   .score-bar-pct { color: var(--grit-col); }
-    .score-bar-row.pitch-color  .score-bar-fill { background: linear-gradient(to right, #b8e4ff, var(--pitch-col)); }
-    .score-bar-row.timbre-color .score-bar-fill { background: linear-gradient(to right, #e0b8ff, var(--timbre-col)); }
-    .score-bar-row.grit-color   .score-bar-fill { background: linear-gradient(to right, #fff0b8, var(--grit-col)); }
-
-    /* ── Compare sliders ── */
-    .compare-section-label {
-      font-size: 0.6rem; font-weight: 900; letter-spacing: 0.18em;
-      text-transform: uppercase; color: var(--muted); margin: 16px 0 10px;
-    }
-    .compare-rows { display: flex; flex-direction: column; gap: 16px; }
-    .compare-row { display: flex; flex-direction: column; gap: 6px; }
-    .compare-label { display: flex; justify-content: space-between; align-items: center; }
-    .compare-tags { display: flex; gap: 6px; }
-    .compare-tag {
-      font-size: 0.57rem; font-weight: 800; letter-spacing: 0.1em;
-      text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
-    }
-    .compare-tag.you    { background: rgba(110,198,255,0.15); color: var(--pitch-col); border: 1px solid var(--pitch-col); }
-    .compare-tag.target { background: rgba(57,255,110,0.12); color: #28a84e; border: 1px solid var(--green-neon); }
-    .compare-track-wrap { position: relative; height: 30px; display: flex; align-items: center; }
-    .compare-track-wrap input[type="range"] { pointer-events: none; }
-    .target-marker {
-      position: absolute;
-      top: 50%; transform: translate(-50%, -50%);
-      width: 5px; height: 24px;
-      background: var(--green-neon);
-      border-radius: 3px;
-      box-shadow: 0 0 10px var(--green-neon), 0 0 4px #fff;
-      pointer-events: none; z-index: 4;
-    }
-    .compare-play-row { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
-
-    /* ── Divider ── */
-    .divider { width: 100%; height: 1.5px; background: var(--card-border); border-radius: 1px; }
-
-    /* ── Final ── */
-    .final-score-wrap { text-align: center; }
-    .final-big {
-      font-family: 'Bubblegum Sans', cursive;
-      font-size: 5.5rem; line-height: 1;
-      background: linear-gradient(135deg, var(--pink2), var(--purple), var(--blue));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-      filter: drop-shadow(0 3px 12px rgba(192,123,255,0.38));
-    }
-    .final-comment { font-size: 1rem; font-weight: 800; color: var(--text); margin-top: 10px; line-height: 1.5; }
-    .history { display: flex; flex-direction: column; gap: 7px; width: 100%; margin-top: 4px; }
-    .history-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 7px 12px; border-radius: 12px;
-      background: rgba(192,123,255,0.06); border: 1px solid var(--card-border);
-      font-size: 0.82rem;
-    }
-    .history-row .hr-round { color: var(--muted); font-weight: 700; }
-    .history-row .hr-val   { font-weight: 800; color: var(--purple); }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonic Palette: Meow Edition 🐾</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Master Volume -->
-  <div class="master-vol">
-    <span style="font-size:1rem">🔊</span>
-    <span class="master-vol-label">Vol</span>
-    <input type="range" id="master-vol-slider" min="0" max="100" value="70" step="1" />
-  </div>
+<!-- ═══════ Background Anime Cats ═══════ -->
+<div class="bg-cats">
+  <div class="bg-cat"><img src="res/cat1.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat2.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat3.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat1.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat2.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat3.png" alt="cat"></div>
+  <div class="bg-cat"><img src="res/cat1.png" alt="cat"></div>
+</div>
+
+<!-- ═══════ App Root ═══════ -->
+<div id="app" v-cloak @vue:mounted="loadDefaultAudio()">
 
   <!-- Header -->
   <div class="title-wrap">
     <h1>Sonic Palette</h1>
-    <p class="subtitle">Meow Edition &nbsp;·&nbsp; Can You Tune It?</p>
-    <div class="sparkles">✦ ✧ ✦ 🐱 ✦ ✧ ✦</div>
+    <div class="subtitle">meow edition</div>
   </div>
+  <div class="sparkles"><span>✦</span><span>⋆</span><span>✦</span><span>⋆</span><span>✦</span></div>
 
-  <!-- ═══ INIT ═══ -->
-  <div class="screen active" id="screen-init">
+  <!-- ═══════ INIT SCREEN ═══════ -->
+  <div class="screen" :class="{ active: screen === 'init' }">
     <div class="card">
       <div class="card-lace"></div>
-      <span class="deco deco-tl">🌸</span>
-      <span class="deco deco-tr">✨</span>
-      <span class="deco deco-bl">🐾</span>
-      <span class="deco deco-br">🎵</span>
-      <div class="phase-label">Initialize</div>
-      <div class="phase-title">Ready to Meow?</div>
-      <div id="default-status" style="margin-top:12px">Loading default meow…</div>
+      <div class="deco deco-tl">🌸</div><div class="deco deco-tr">⭐</div>
+      <div class="deco deco-bl">🎵</div><div class="deco deco-br">💜</div>
+
+      <div style="text-align:center;margin-bottom:18px">
+        <div class="phase-title">Load Your Meow</div>
+      </div>
+
+      <div class="default-status" :style="{ color: defaultStatusOk ? '#9c5cd4' : '#b09ac0' }">
+        {{ defaultStatus }}
+      </div>
+
       <div class="upload-zone">
-        <input type="file" id="file-input" accept="audio/*" />
-        <div class="upload-icon">🐾</div>
-        <div class="upload-label">(Optional) Upload a custom meow — <span>browse</span></div>
-        <div class="file-name" id="file-name"></div>
+        <input type="file" accept="audio/*" @change="onFileInput($event)">
+        <div class="upload-icon">🐱</div>
+        <div class="upload-label">Drag &amp; drop or <span>browse</span></div>
+        <div class="file-name">{{ fileName }}</div>
       </div>
-    </div>
-    <button class="btn btn-primary" id="btn-start" disabled>Start Game ✨</button>
-  </div>
 
-  <!-- ═══ LISTEN ═══ -->
-  <div class="screen" id="screen-listen">
-    <div class="round-indicator" id="round-dots-listen"></div>
-    <div class="card">
-      <div class="card-lace"></div>
-      <span class="deco deco-tl">🌟</span>
-      <span class="deco deco-tr">💫</span>
-      <div class="phase-label">Round <span id="listen-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 1</div>
-      <div class="phase-title">Listen to the Target</div>
-      <div style="margin-top:14px;text-align:center">
-        <div class="pulse-wrap"><div class="pulse" id="listen-pulse">🐱</div></div>
-        <div class="countdown" id="listen-countdown">–</div>
-        <div class="waveform" id="listen-waveform">
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-          <div class="waveform-bar"></div><div class="waveform-bar"></div>
-        </div>
+      <div style="margin-top:20px;text-align:center">
+        <button class="btn btn-primary" :disabled="!audioReady" @click="startGame()">
+          Start Game 🎮
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ TUNE ═══ -->
-  <div class="screen" id="screen-tune">
-    <div class="round-indicator" id="round-dots-tune"></div>
+  <!-- ═══════ LISTEN SCREEN ═══════ -->
+  <div class="screen" :class="{ active: screen === 'listen' }">
+    <div class="round-indicator">
+      <div v-for="i in 5" :key="i" :class="dotClass(i - 1)">{{ dotText(i - 1) }}</div>
+    </div>
     <div class="card">
       <div class="card-lace"></div>
-      <span class="deco deco-tl">💜</span>
-      <span class="deco deco-tr">🎵</span>
-      <span class="deco deco-bl">🌸</span>
-      <span class="deco deco-br">🐾</span>
-      <div class="phase-label">Round <span id="tune-round-num">1</span> of 5 &nbsp;·&nbsp; Phase 2</div>
-      <div class="phase-title">Tune to Match</div>
-      <div class="waveform" id="tune-waveform" style="margin:10px 0">
+      <div class="deco deco-tl">🎧</div><div class="deco deco-tr">🌙</div>
+      <div class="deco deco-bl">🎀</div><div class="deco deco-br">✨</div>
+
+      <div style="text-align:center">
+        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
+        <div class="phase-title">Listen 🎧</div>
+      </div>
+
+      <div class="pulse-wrap">
+        <div class="pulse" :class="{ idle: pulseIdle }">🐱</div>
+      </div>
+
+      <div class="countdown">{{ countdown }}</div>
+
+      <div class="waveform" :class="{ playing: listenWave }">
         <div class="waveform-bar"></div><div class="waveform-bar"></div>
         <div class="waveform-bar"></div><div class="waveform-bar"></div>
         <div class="waveform-bar"></div><div class="waveform-bar"></div>
         <div class="waveform-bar"></div><div class="waveform-bar"></div>
       </div>
-      <div class="divider" style="margin:12px 0 18px"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ TUNE SCREEN ═══════ -->
+  <div class="screen" :class="{ active: screen === 'tune' }">
+    <div class="round-indicator">
+      <div v-for="i in 5" :key="i" :class="dotClass(i - 1)">{{ dotText(i - 1) }}</div>
+    </div>
+    <div class="card">
+      <div class="card-lace"></div>
+      <div class="deco deco-tl">🎛️</div><div class="deco deco-tr">🎶</div>
+      <div class="deco deco-bl">🩷</div><div class="deco deco-br">☁️</div>
+
+      <div style="text-align:center">
+        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
+        <div class="phase-title">Tune It 🎛️</div>
+      </div>
+
+      <div class="waveform" :class="{ playing: tuneWave }">
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+        <div class="waveform-bar"></div><div class="waveform-bar"></div>
+      </div>
+
       <div class="sliders-wrap">
+        <!-- Pitch -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name pitch-color">Pitch</span>
-            <span class="slider-hint">Low — High</span>
+            <span class="slider-name pitch-col">☁️ Pitch</span>
+            <span class="slider-hint">Speed / Frequency</span>
           </div>
           <div class="slider-track-wrap">
-            <input type="range" class="kawaii-slider" id="slider-pitch" min="0" max="1000" value="500" step="1" />
-            <div class="emoji-thumb" id="thumb-pitch">☁️</div>
+            <input id="slider-pitch" type="range" class="kawaii-slider" min="0" max="1000" step="1"
+                   :value="sliderPitch"
+                   @input="sliderPitch = +$event.target.value; onSliderInput()">
+            <div class="emoji-thumb" :style="{ '--pct': sliderPitch / 1000 }">☁️</div>
           </div>
         </div>
+        <!-- Timbre -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name timbre-color">Timbre</span>
-            <span class="slider-hint">Chunky · Tiny</span>
+            <span class="slider-name timbre-col">🩷 Timbre</span>
+            <span class="slider-hint">Brightness / Tone colour</span>
           </div>
           <div class="slider-track-wrap">
-            <input type="range" class="kawaii-slider" id="slider-timbre" min="0" max="1000" value="500" step="1" />
-            <div class="emoji-thumb" id="thumb-timbre">🩷</div>
+            <input id="slider-timbre" type="range" class="kawaii-slider" min="0" max="1000" step="1"
+                   :value="sliderTimbre"
+                   @input="sliderTimbre = +$event.target.value; onSliderInput()">
+            <div class="emoji-thumb" :style="{ '--pct': sliderTimbre / 1000 }">🩷</div>
           </div>
         </div>
+        <!-- Tremolo -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name grit-color">Grit</span>
-            <span class="slider-hint">Pure — Raspy</span>
+            <span class="slider-name tremolo-col">🐾 Tremolo</span>
+            <span class="slider-hint">Wobble depth</span>
           </div>
           <div class="slider-track-wrap">
-            <input type="range" class="kawaii-slider" id="slider-grit" min="0" max="1000" value="500" step="1" />
-            <div class="emoji-thumb" id="thumb-grit">🐾</div>
+            <input id="slider-tremolo" type="range" class="kawaii-slider" min="0" max="1000" step="1"
+                   :value="sliderTremolo"
+                   @input="sliderTremolo = +$event.target.value; onSliderInput()">
+            <div class="emoji-thumb" :style="{ '--pct': sliderTremolo / 1000 }">🐾</div>
           </div>
         </div>
       </div>
-      <div class="divider" style="margin:18px 0 12px"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-confirm">Confirm ✓</button>
+
+      <div style="text-align:center;margin-top:18px">
+        <button class="btn btn-primary" @click="confirmTune()">Confirm 😺</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══ ROUND SCORE ═══ -->
-  <div class="screen" id="screen-round-score">
-    <div class="round-indicator" id="round-dots-score"></div>
+  <!-- ═══════ ROUND SCORE SCREEN ═══════ -->
+  <div class="screen" :class="{ active: screen === 'round-score' }">
+    <div class="round-indicator">
+      <div v-for="i in 5" :key="i" :class="dotClass(i - 1)">{{ dotText(i - 1) }}</div>
+    </div>
     <div class="card">
       <div class="card-lace"></div>
-      <span class="deco deco-tl">⭐</span>
-      <span class="deco deco-tr">🌟</span>
-      <span class="deco deco-br">✨</span>
-      <div class="phase-label">Round <span id="score-round-num">1</span> Result</div>
-      <div class="score-big" id="round-score-val">0%</div>
-      <div class="score-subtext">Accuracy</div>
+      <div class="deco deco-tl">🏅</div><div class="deco deco-tr">✨</div>
+      <div class="deco deco-bl">💖</div><div class="deco deco-br">🎀</div>
+
+      <div style="text-align:center">
+        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
+        <div class="phase-title">Round Score</div>
+      </div>
+
+      <div class="score-big" :class="{ animating: scoreAnimating }">{{ scoreDisplay }}</div>
+      <div class="score-subtext">accuracy</div>
+
+      <!-- Score bars -->
       <div class="score-bars">
-        <div class="score-bar-row pitch-color">
-          <span class="score-bar-lbl">Pitch</span>
-          <div class="score-bar-track"><div class="score-bar-fill" id="bar-pitch"></div></div>
-          <span class="score-bar-pct" id="bd-pitch">--</span>
+        <div class="score-bar-row pitch-row">
+          <div class="score-bar-lbl">Pitch</div>
+          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barPitch }"></div></div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.pitch.toFixed(1) + '%' : '--' }}</div>
         </div>
-        <div class="score-bar-row timbre-color">
-          <span class="score-bar-lbl">Timbre</span>
-          <div class="score-bar-track"><div class="score-bar-fill" id="bar-timbre"></div></div>
-          <span class="score-bar-pct" id="bd-timbre">--</span>
+        <div class="score-bar-row timbre-row">
+          <div class="score-bar-lbl">Timbre</div>
+          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barTimbre }"></div></div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.timbre.toFixed(1) + '%' : '--' }}</div>
         </div>
-        <div class="score-bar-row grit-color">
-          <span class="score-bar-lbl">Grit</span>
-          <div class="score-bar-track"><div class="score-bar-fill" id="bar-grit"></div></div>
-          <span class="score-bar-pct" id="bd-grit">--</span>
+        <div class="score-bar-row tremolo-row">
+          <div class="score-bar-lbl">Tremolo</div>
+          <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barTremolo }"></div></div>
+          <div class="score-bar-pct">{{ roundResult ? roundResult.tremolo.toFixed(1) + '%' : '--' }}</div>
         </div>
       </div>
-      <div class="divider" style="margin:16px 0 4px"></div>
-      <div class="compare-section-label">Slider Comparison</div>
+
+      <div class="divider" style="margin:16px 0"></div>
+
+      <!-- Compare sliders -->
+      <div class="compare-section-label">Visual Compare</div>
       <div class="compare-rows">
+        <!-- Pitch compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name pitch-color">Pitch</span>
+            <span class="slider-name pitch-col">☁️ Pitch</span>
             <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="kawaii-slider" id="cmp-pitch" min="0" max="1000" value="500" />
-            <div class="emoji-thumb" id="cmp-thumb-pitch">☁️</div>
-            <div class="target-marker" id="tgt-pitch"></div>
+            <input id="cmp-pitch" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpPitch" tabindex="-1">
+            <div class="emoji-thumb" :style="{ '--pct': cmpPitch / 1000 }">☁️</div>
+            <div class="target-marker" :style="{ '--pct': tgtPitchPct }"></div>
           </div>
         </div>
+        <!-- Timbre compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name timbre-color">Timbre</span>
+            <span class="slider-name timbre-col">🩷 Timbre</span>
             <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="kawaii-slider" id="cmp-timbre" min="0" max="1000" value="500" />
-            <div class="emoji-thumb" id="cmp-thumb-timbre">🩷</div>
-            <div class="target-marker" id="tgt-timbre"></div>
+            <input id="cmp-timbre" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpTimbre" tabindex="-1">
+            <div class="emoji-thumb" :style="{ '--pct': cmpTimbre / 1000 }">🩷</div>
+            <div class="target-marker" :style="{ '--pct': tgtTimbrePct }"></div>
           </div>
         </div>
+        <!-- Tremolo compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name grit-color">Grit</span>
+            <span class="slider-name tremolo-col">🐾 Tremolo</span>
             <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
           </div>
           <div class="compare-track-wrap">
-            <input type="range" class="kawaii-slider" id="cmp-grit" min="0" max="1000" value="500" />
-            <div class="emoji-thumb" id="cmp-thumb-grit">🐾</div>
-            <div class="target-marker" id="tgt-grit"></div>
+            <input id="cmp-tremolo" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpTremolo" tabindex="-1">
+            <div class="emoji-thumb" :style="{ '--pct': cmpTremolo / 1000 }">🐾</div>
+            <div class="target-marker" :style="{ '--pct': tgtTremoloPct }"></div>
           </div>
         </div>
       </div>
+
+      <!-- Play buttons -->
       <div class="compare-play-row">
-        <button class="btn btn-green" id="btn-play-target-score">🎯 Play Target</button>
-        <button class="btn btn-alt"   id="btn-play-yours-score">🎵 Play Your Tune</button>
+        <button class="btn btn-green" :class="{ playing: playingTarget }" :disabled="playDisabled" @click="playTarget()">
+          🎯 Play Target
+        </button>
+        <button class="btn btn-alt" :class="{ playing: playingYours }" :disabled="playDisabled" @click="playYours()">
+          🐱 Play Yours
+        </button>
+      </div>
+
+      <div style="text-align:center;margin-top:18px">
+        <button :class="isLastRound ? 'btn btn-danger' : 'btn btn-primary'" @click="nextRound()">
+          {{ isLastRound ? 'View Final Results 🏆' : 'Next Round →' }}
+        </button>
       </div>
     </div>
-    <button class="btn btn-primary" id="btn-next-round">Next Round →</button>
   </div>
 
-  <!-- ═══ GAME OVER ═══ -->
-  <div class="screen" id="screen-gameover">
+  <!-- ═══════ GAME OVER SCREEN ═══════ -->
+  <div class="screen" :class="{ active: screen === 'gameover' }">
     <div class="card">
       <div class="card-lace"></div>
-      <span class="deco deco-tl">🏆</span>
-      <span class="deco deco-tr">🎉</span>
-      <span class="deco deco-bl">🐱</span>
-      <span class="deco deco-br">🌟</span>
-      <div class="final-score-wrap">
-        <div class="phase-label">Final Score</div>
-        <div class="final-big" id="final-score-val">--</div>
-        <div class="score-subtext">Average Accuracy</div>
-        <div class="final-comment" id="final-comment"></div>
+      <div class="deco deco-tl">🏆</div><div class="deco deco-tr">🌟</div>
+      <div class="deco deco-bl">🎉</div><div class="deco deco-br">🐾</div>
+
+      <div style="text-align:center;margin-bottom:10px">
+        <div class="phase-title">Final Results</div>
       </div>
-      <div class="divider" style="margin:18px 0 12px"></div>
-      <div class="history" id="history-list"></div>
+
+      <div class="final-score-wrap">
+        <div class="final-big">{{ finalAvg.toFixed(2) }}%</div>
+        <div class="final-comment" v-html="finalComment"></div>
+      </div>
+
+      <div class="divider" style="margin:14px 0"></div>
+
+      <div class="history">
+        <div class="history-row" v-for="(r, i) in roundScores" :key="i">
+          <span class="hr-round">Round {{ i + 1 }}</span>
+          <span class="hr-val">{{ r.total.toFixed(2) }}%</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:18px">
+        <button class="btn btn-primary" @click="playAgain()">Play Again 🔄</button>
+      </div>
     </div>
-    <button class="btn btn-danger" id="btn-play-again">Play Again 🐾</button>
   </div>
 
-<script>
-/* ════════════════════════════════════
-   CONSTANTS
-════════════════════════════════════ */
-const PITCH_MIN  = 0.5,  PITCH_MAX  = 2.0;
-const TIMBRE_MIN = 300,  TIMBRE_MAX = 3000;
-const GRIT_MIN   = 0,    GRIT_MAX   = 50;
-const TOTAL_ROUNDS = 5;
-const DEFAULT_AUDIO_URL = 'dragon-studio-cat-meow-401729.mp3';
+  <!-- ═══════ Master Volume ═══════ -->
+  <div class="master-vol">
+    <span class="master-vol-label">🔊 Vol</span>
+    <input id="master-vol-slider" type="range" min="0" max="100" step="1"
+           :value="masterVol"
+           @input="masterVol = +$event.target.value; onMasterVol()">
+  </div>
 
-/* ════════════════════════════════════
-   STATE
-════════════════════════════════════ */
-let audioCtx       = null;
-let audioBuffer    = null;
-let currentSource  = null;
-let filterNode     = null;
-let waveShaperNode = null;
-let masterGainNode = null;
+</div><!-- /app -->
 
-let targetPitch = 1, targetTimbre = 1500, targetGrit = 0;
-let lastPlayerPitch = 1, lastPlayerTimbre = 1500, lastPlayerGrit = 0;
-let currentRound = 0;
-let roundScores  = [];
-let listenTimer  = null;
-let scoreCountUpRAF = null;
-
-/* ════════════════════════════ Distortion ════ */
-function makeDistortionCurve(amount) {
-  const n = 256, curve = new Float32Array(n);
-  for (let i = 0; i < n; i++) {
-    const x = (i * 2) / n - 1;
-    curve[i] = amount === 0 ? x : (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
-  }
-  return curve;
-}
-
-/* ════════════════════════════ Mapping ════ */
-function sliderToPitch(v)  { return PITCH_MIN  + (v/1000)*(PITCH_MAX  - PITCH_MIN); }
-function sliderToTimbre(v) { return TIMBRE_MIN + (v/1000)*(TIMBRE_MAX - TIMBRE_MIN); }
-function sliderToGrit(v)   { return GRIT_MIN   + (v/1000)*(GRIT_MAX   - GRIT_MIN); }
-function pitchToSlider(p)  { return Math.round((p - PITCH_MIN)  / (PITCH_MAX  - PITCH_MIN)  * 1000); }
-function timbreToSlider(t) { return Math.round((t - TIMBRE_MIN) / (TIMBRE_MAX - TIMBRE_MIN) * 1000); }
-function gritToSlider(g)   { return Math.round((g - GRIT_MIN)   / (GRIT_MAX   - GRIT_MIN)   * 1000); }
-
-/* ════════════════════════════ Emoji thumbs ════ */
-function positionThumb(sliderId, thumbId) {
-  const slider = document.getElementById(sliderId);
-  const thumb  = document.getElementById(thumbId);
-  if (!slider || !thumb) return;
-  const pct = slider.value / slider.max;
-  const w   = slider.offsetWidth;
-  thumb.style.left = (pct * (w - 28) + 14) + 'px';
-}
-function positionAllThumbs() {
-  [['slider-pitch','thumb-pitch'],['slider-timbre','thumb-timbre'],['slider-grit','thumb-grit']].forEach(([s,t]) => positionThumb(s,t));
-}
-function positionCompareThumbs() {
-  [['cmp-pitch','cmp-thumb-pitch'],['cmp-timbre','cmp-thumb-timbre'],['cmp-grit','cmp-thumb-grit']].forEach(([s,t]) => positionThumb(s,t));
-}
-
-/* ════════════════════════════ Screen / Dots ════ */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
-  requestAnimationFrame(() => { positionAllThumbs(); positionCompareThumbs(); });
-}
-function renderDots(containerId) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = '';
-  for (let i = 0; i < TOTAL_ROUNDS; i++) {
-    const d = document.createElement('div');
-    d.className = 'round-dot' + (i < currentRound ? ' done' : i === currentRound ? ' active' : '');
-    d.textContent = i === currentRound ? '😺' : '⭐';
-    el.appendChild(d);
-  }
-}
-
-/* ════════════════════════════ Audio engine ════ */
-function ensureAudioContext() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGainNode = audioCtx.createGain();
-    masterGainNode.gain.value = +document.getElementById('master-vol-slider').value / 100;
-    masterGainNode.connect(audioCtx.destination);
-  }
-}
-function stopCurrent() {
-  if (currentSource) { try { currentSource.stop(); } catch(_) {} currentSource = null; }
-}
-function buildGraph(pitch, timbre, grit, loop = false) {
-  stopCurrent();
-  ensureAudioContext();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  const src = audioCtx.createBufferSource();
-  src.buffer = audioBuffer;
-  src.loop   = loop;
-  src.playbackRate.value = pitch;
-  filterNode = audioCtx.createBiquadFilter();
-  filterNode.type = 'peaking'; filterNode.Q.value = 5;
-  filterNode.gain.value = 15; filterNode.frequency.value = timbre;
-  waveShaperNode = audioCtx.createWaveShaper();
-  waveShaperNode.curve = makeDistortionCurve(grit);
-  waveShaperNode.oversample = '4x';
-  src.connect(filterNode);
-  filterNode.connect(waveShaperNode);
-  waveShaperNode.connect(masterGainNode);
-  src.start();
-  currentSource = src;
-  src.onended = () => { if (currentSource === src) currentSource = null; };
-}
-function playOnce(pitch, timbre, grit) { buildGraph(pitch, timbre, grit, false); }
-
-/* ════════════════════════════ Scoring ════ */
-function calcScore(target, player, min, max) {
-  return Math.max(0, 100 - (Math.abs(target - player) / (max - min) * 100));
-}
-function computeRoundScore(pP, pT, pG) {
-  const ps = calcScore(targetPitch, pP, PITCH_MIN, PITCH_MAX);
-  const ts = calcScore(targetTimbre, pT, TIMBRE_MIN, TIMBRE_MAX);
-  const gs = calcScore(targetGrit, pG, GRIT_MIN, GRIT_MAX);
-  return { pitch: ps, timbre: ts, grit: gs, total: (ps + ts + gs) / 3 };
-}
-
-/* ════════════════════════════ Count-up ════ */
-function animateScore(targetVal) {
-  if (scoreCountUpRAF) cancelAnimationFrame(scoreCountUpRAF);
-  const el = document.getElementById('round-score-val');
-  el.classList.add('animating');
-  const duration = 950, start = performance.now();
-  (function step(now) {
-    const t = Math.min((now - start) / duration, 1);
-    const e = 1 - Math.pow(1 - t, 3);
-    el.textContent = (e * targetVal).toFixed(2) + '%';
-    if (t < 1) { scoreCountUpRAF = requestAnimationFrame(step); }
-    else { el.textContent = targetVal.toFixed(2) + '%'; el.classList.remove('animating'); }
-  })(start);
-}
-
-/* ════════════════════════════ Game flow ════ */
-function startGame() { currentRound = 0; roundScores = []; startRound(); }
-
-function startRound() {
-  targetPitch  = PITCH_MIN  + Math.random() * (PITCH_MAX  - PITCH_MIN);
-  targetTimbre = TIMBRE_MIN + Math.random() * (TIMBRE_MAX - TIMBRE_MIN);
-  targetGrit   = GRIT_MIN   + Math.random() * (GRIT_MAX   - GRIT_MIN);
-  ['slider-pitch','slider-timbre','slider-grit'].forEach(id => { document.getElementById(id).value = 500; });
-  ['round-dots-listen','round-dots-tune','round-dots-score'].forEach(id => renderDots(id));
-  ['listen-round-num','tune-round-num','score-round-num'].forEach(id => {
-    document.getElementById(id).textContent = currentRound + 1;
-  });
-  showScreen('listen');
-  startListen();
-}
-
-function startListen() {
-  const pulse = document.getElementById('listen-pulse');
-  const cdEl  = document.getElementById('listen-countdown');
-  const wf    = document.getElementById('listen-waveform');
-  pulse.classList.remove('idle');
-  wf.classList.add('playing');
-  buildGraph(targetPitch, targetTimbre, targetGrit, true);
-  let remaining = 5;
-  cdEl.textContent = remaining;
-  listenTimer = setInterval(() => {
-    remaining--;
-    cdEl.textContent = remaining > 0 ? remaining : '–';
-    if (remaining <= 0) {
-      clearInterval(listenTimer);
-      stopCurrent();
-      wf.classList.remove('playing');
-      pulse.classList.add('idle');
-      startTune();
-    }
-  }, 1000);
-}
-
-function startTune() {
-  showScreen('tune');
-  positionAllThumbs();
-  const p = sliderToPitch(+document.getElementById('slider-pitch').value);
-  const t = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const g = sliderToGrit(+document.getElementById('slider-grit').value);
-  buildGraph(p, t, g, true);
-  document.getElementById('tune-waveform').classList.add('playing');
-}
-
-function setTargetMarker(markerId, sliderVal, sliderId) {
-  const slider = document.getElementById(sliderId);
-  const marker = document.getElementById(markerId);
-  if (!slider || !marker) return;
-  marker.style.left = (sliderVal / 1000 * (slider.offsetWidth - 28) + 14) + 'px';
-}
-
-function confirmTune() {
-  stopCurrent();
-  document.getElementById('tune-waveform').classList.remove('playing');
-  const pP = sliderToPitch(+document.getElementById('slider-pitch').value);
-  const pT = sliderToTimbre(+document.getElementById('slider-timbre').value);
-  const pG = sliderToGrit(+document.getElementById('slider-grit').value);
-  lastPlayerPitch = pP; lastPlayerTimbre = pT; lastPlayerGrit = pG;
-  const result = computeRoundScore(pP, pT, pG);
-  roundScores.push(result);
-
-  document.getElementById('cmp-pitch').value  = pitchToSlider(pP);
-  document.getElementById('cmp-timbre').value = timbreToSlider(pT);
-  document.getElementById('cmp-grit').value   = gritToSlider(pG);
-
-  const btnNext = document.getElementById('btn-next-round');
-  btnNext.textContent = currentRound + 1 >= TOTAL_ROUNDS ? 'View Final Results 🏆' : 'Next Round →';
-  btnNext.className   = currentRound + 1 >= TOTAL_ROUNDS ? 'btn btn-danger' : 'btn btn-primary';
-  ['round-dots-score'].forEach(id => renderDots(id));
-  document.getElementById('score-round-num').textContent = currentRound + 1;
-
-  ['bar-pitch','bar-timbre','bar-grit'].forEach(id => { document.getElementById(id).style.width = '0%'; });
-  document.getElementById('bd-pitch').textContent  = result.pitch.toFixed(1) + '%';
-  document.getElementById('bd-timbre').textContent = result.timbre.toFixed(1) + '%';
-  document.getElementById('bd-grit').textContent   = result.grit.toFixed(1) + '%';
-
-  resetPlayBtn('btn-play-target-score');
-  resetPlayBtn('btn-play-yours-score');
-
-  showScreen('round-score');
-
-  setTimeout(() => {
-    document.getElementById('bar-pitch').style.width  = result.pitch + '%';
-    document.getElementById('bar-timbre').style.width = result.timbre + '%';
-    document.getElementById('bar-grit').style.width   = result.grit + '%';
-  }, 250);
-
-  requestAnimationFrame(() => {
-    positionCompareThumbs();
-    setTargetMarker('tgt-pitch',  pitchToSlider(targetPitch),  'cmp-pitch');
-    setTargetMarker('tgt-timbre', timbreToSlider(targetTimbre),'cmp-timbre');
-    setTargetMarker('tgt-grit',   gritToSlider(targetGrit),    'cmp-grit');
-  });
-
-  animateScore(result.total);
-}
-
-function nextRound() { stopCurrent(); currentRound++; if (currentRound >= TOTAL_ROUNDS) showGameOver(); else startRound(); }
-
-function showGameOver() {
-  const avg = roundScores.reduce((a, b) => a + b.total, 0) / TOTAL_ROUNDS;
-  document.getElementById('final-score-val').textContent = avg.toFixed(2) + '%';
-  let c = '';
-  if      (avg >= 95) c = '"Tetrachromat of Sound!" 🎯';
-  else if (avg >= 85) c = '"Cat Whisperer. Absolute unit." 😼';
-  else if (avg >= 70) c = '"Pretty good ears, not gonna lie." 🎧';
-  else if (avg >= 50) c = '"Decent. Keep practicing." 🐱';
-  else if (avg >= 30) c = '"Are you sure you\'re listening?" 😐';
-  else                c = '"Go wash your ears." 🚿';
-  document.getElementById('final-comment').textContent = c;
-  const histEl = document.getElementById('history-list');
-  histEl.innerHTML = '';
-  roundScores.forEach((r, i) => {
-    const row = document.createElement('div');
-    row.className = 'history-row';
-    row.innerHTML = `<span class="hr-round">Round ${i+1}</span><span class="hr-val">${r.total.toFixed(2)}%</span>`;
-    histEl.appendChild(row);
-  });
-  showScreen('gameover');
-}
-
-/* ════════════════════════════ Play buttons (score screen) ════ */
-function resetPlayBtn(id) {
-  const b = document.getElementById(id);
-  b.disabled = false; b.classList.remove('playing');
-}
-function handleScorePlay(btnId, otherBtnId, pitch, timbre, grit) {
-  const btn = document.getElementById(btnId), other = document.getElementById(otherBtnId);
-  if (btn.disabled) return;
-  stopCurrent();
-  btn.disabled = other.disabled = true;
-  btn.classList.add('playing');
-  playOnce(pitch, timbre, grit);
-  const ms = (audioBuffer ? audioBuffer.duration * 1000 : 2000) + 200;
-  setTimeout(() => { btn.disabled = other.disabled = false; btn.classList.remove('playing'); }, ms);
-}
-
-/* ════════════════════════════ Events ════ */
-document.getElementById('file-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  document.getElementById('file-name').textContent = file.name;
-  ensureAudioContext();
-  try {
-    audioBuffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
-    const s = document.getElementById('default-status');
-    s.style.color = '#9c5cd4'; s.textContent = '✓ Custom meow loaded: ' + file.name;
-    document.getElementById('btn-start').disabled = false;
-  } catch { document.getElementById('file-name').textContent = '⚠ Could not decode audio.'; }
-});
-
-document.getElementById('master-vol-slider').addEventListener('input', (e) => {
-  if (masterGainNode) masterGainNode.gain.value = e.target.value / 100;
-});
-
-document.getElementById('btn-start').addEventListener('click', () => {
-  ensureAudioContext();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  startGame();
-});
-
-['slider-pitch','slider-timbre','slider-grit'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    positionAllThumbs();
-    const p = sliderToPitch(+document.getElementById('slider-pitch').value);
-    const t = sliderToTimbre(+document.getElementById('slider-timbre').value);
-    const g = sliderToGrit(+document.getElementById('slider-grit').value);
-    if (currentSource) {
-      currentSource.playbackRate.value = p;
-      if (filterNode) filterNode.frequency.value = t;
-      if (waveShaperNode) waveShaperNode.curve = makeDistortionCurve(g);
-    } else {
-      buildGraph(p, t, g, true);
-    }
-    document.getElementById('tune-waveform').classList.add('playing');
-  });
-});
-
-document.getElementById('btn-confirm').addEventListener('click', confirmTune);
-
-document.getElementById('btn-play-target-score').addEventListener('click', () => {
-  handleScorePlay('btn-play-target-score','btn-play-yours-score', targetPitch, targetTimbre, targetGrit);
-});
-document.getElementById('btn-play-yours-score').addEventListener('click', () => {
-  handleScorePlay('btn-play-yours-score','btn-play-target-score', lastPlayerPitch, lastPlayerTimbre, lastPlayerGrit);
-});
-
-document.getElementById('btn-next-round').addEventListener('click', nextRound);
-document.getElementById('btn-play-again').addEventListener('click', () => { stopCurrent(); startGame(); });
-
-window.addEventListener('resize', () => { positionAllThumbs(); positionCompareThumbs(); });
-
-/* ════════════════════════════ Startup ════ */
-['round-dots-listen','round-dots-tune','round-dots-score'].forEach(id => renderDots(id));
-
-async function loadDefaultAudio() {
-  const s = document.getElementById('default-status');
-  ensureAudioContext();
-  try {
-    const resp = await fetch(DEFAULT_AUDIO_URL);
-    if (!resp.ok) throw new Error();
-    audioBuffer = await audioCtx.decodeAudioData(await resp.arrayBuffer());
-    s.style.color = '#9c5cd4';
-    s.textContent = '✓ Default meow loaded! (or upload your own below)';
-    document.getElementById('btn-start').disabled = false;
-  } catch {
-    s.style.color = '#e05580';
-    s.textContent = '⚠ Could not load default audio. Please upload a meow file.';
-  }
-}
-loadDefaultAudio();
-</script>
+<!-- Petite-Vue CDN + App -->
+<script src="https://cdn.jsdelivr.net/npm/petite-vue@0.4.1/dist/petite-vue.iife.js"></script>
+<script src="game.js"></script>
 </body>
 </html>

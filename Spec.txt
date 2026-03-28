@@ -1,10 +1,10 @@
 遊戲規格書：聽覺色盤 - 喵喵調音師 (Sonic Palette: Meow Edition)
 
-1. 遊戲概述 (Overview)
+遊戲概述 (Overview)
 
-這是一款基於純網頁前端技術的聽覺解謎遊戲。遊戲將測試玩家對聲音細節（音高、音色、沙啞度）的敏銳度。玩家需要聆聽一段隨機生成的「目標貓叫聲」，然後利用三個滑桿（Sliders）將原始的貓叫聲調整至與目標聲音一致。遊戲共進行 5 個回合，最後計算總分。
+這是一款基於純網頁前端技術的聽覺解謎遊戲。遊戲將測試玩家對聲音細節（音高、音色、呼嚕顫音）的敏銳度。玩家需要聆聽一段隨機生成的「目標貓叫聲」，然後利用三個滑桿（Sliders）將原始的貓叫聲調整至與目標聲音一致。遊戲共進行 5 個回合，最後計算總分。
 
-2. 技術棧 (Tech Stack)
+技術棧 (Tech Stack)
 
 前端結構： HTML5
 
@@ -20,13 +20,15 @@ AudioBufferSourceNode (用於載入和播放音訊檔，不循環播放)
 
 BiquadFilterNode (用於控制音色 Timbre)
 
-WaveShaperNode (新增：用於控制沙啞度/失真 Grit)
+OscillatorNode (新增：作為 LFO 低頻振盪器，產生震動感)
+
+GainNode (新增：用於接收 LFO 訊號以產生 Tremolo 呼嚕顫音效果)
 
 GainNode (用於全域主音量 Master Volume)
 
-3. 核心音訊物理對射 (Audio Mechanics Mapping)
+核心音訊物理對射 (Audio Mechanics Mapping)
 
-音頻節點連接順序：Source ➔ Filter (Timbre) ➔ WaveShaper (Grit) ➔ Master Gain (Volume) ➔ Destination
+音頻節點連接順序：Source ➔ Filter (Timbre) ➔ Tremolo Gain (受 LFO 控制) ➔ Master Gain (Volume) ➔ Destination
 
 基礎聲源 (Base Sound)： 系統預設載入 dragon-studio-cat-meow-401729.mp3（或使用玩家上傳的音檔）。播放時設定 loop = false (播放一次即停)。
 
@@ -46,21 +48,21 @@ GainNode (用於全域主音量 Master Volume)
 
 數值範圍： 300 (Hz, 沉悶胸腔共鳴) 到 3000 (Hz, 尖銳鼻腔共鳴)
 
-變數 3：Grit (沙啞度 / 失真)
+變數 3：Tremolo (呼嚕顫音 / 震動感)
 
-控制對象： WaveShaperNode.curve
+控制對象： LFO (Low Frequency Oscillator) 調變專用的 GainNode。
 
-節點設定： 使用 JavaScript 生成一條失真曲線 (Distortion Curve) Float32Array。
+節點設定： 建立一個 OscillatorNode (type = 'sine', frequency = 約 15Hz - 25Hz，模擬貓咪呼嚕聲的頻率)，將其連接至負責 Tremolo 的 GainNode.gain 參數上。
 
-控制參數： 曲線的極端程度 (Amount)。
+控制參數： LFO 的強度 (Depth / Tremolo Gain 的調變幅度)。
 
-數值範圍： 0 (完全純淨無失真) 到 50 (強烈拆聲/野貓呼嚕聲)
+數值範圍： 0 (平滑純淨的叫聲，完全無震動) 到 1 (強烈的呼嚕震動感 / 撒嬌發抖聲)
 
-4. 遊戲流程 (Game Flow)
+遊戲流程 (Game Flow)
 
 全域 UI 元件 (隨時可用)
 
-Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Destination 前的 GainNode，預設為 0.5。讓玩家隨時調整整體噪音大小。
+Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Destination 前的 Master GainNode，預設為 0.5。讓玩家隨時調整整體噪音大小。
 
 狀態 0：初始化 (Init)
 
@@ -72,7 +74,7 @@ Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Dest
 
 狀態 1：聆聽階段 (Phase: Listen) - 重複 5 圈
 
-系統使用 Math.random() 為 Pitch, Timbre, Echo 隨機生成一組目標數值 (Target Values)。
+系統使用 Math.random() 為 Pitch, Timbre, Tremolo 隨機生成一組目標數值 (Target Values)。
 
 隱藏/禁用三個玩家控制滑桿。
 
@@ -84,7 +86,7 @@ Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Dest
 
 狀態 2：調音還原階段 (Phase: Tune)
 
-畫面顯示 3 個 <input type="range"> 滑桿 (Pitch, Timbre, Echo)。
+畫面顯示 3 個 <input type="range"> 滑桿 (Pitch, Timbre, Tremolo)。
 
 滑桿初始位置應隨機放置，或預設在正中間。
 
@@ -114,13 +116,13 @@ Master Volume Bar (主音量滑桿)： 位於畫面角落，控制連接至 Dest
 
 提供「Play Again」按鈕。
 
-5. UI/UX 設計要求 (UI/UX Design)
+UI/UX 設計要求 (UI/UX Design)
 
-主音量控制： 需獨立於遊戲謎題之外，清晰標示為系統音量。
+主音量控制： 需獨立於遊戲謎題之外，清晰標示為系統音量。defalut 50%, 要save低
 
 按鈕狀態： 點擊 Play 播放聲音時，按鈕應有視覺回饋（例如發光或變色），播放完畢後恢復，避免玩家狂按重疊播放。
 
-6. 計分演算法 (Scoring Algorithm)
+計分演算法 (Scoring Algorithm)
 
 計算單項誤差：
 
@@ -128,8 +130,8 @@ Pitch Score = 100 - ( Math.abs(T_pitch - P_pitch) / (2.0 - 0.5) * 100 )
 
 Timbre Score = 100 - ( Math.abs(T_timbre - P_timbre) / (3000 - 300) * 100 )
 
-Grit Score = 100 - ( Math.abs(T_grit - P_grit) / (50 - 0) * 100 )
+Tremolo Score = 100 - ( Math.abs(T_tremolo - P_tremolo) / (1.0 - 0.0) * 100 )
 
 確保分數不為負數： 若 < 0 則設為 0。
 
-回合總分： (Pitch Score + Timbre Score + Grit Score) / 3 (保留兩位小數)。
+回合總分： (Pitch Score + Timbre Score + Tremolo Score) / 3 (保留兩位小數)
