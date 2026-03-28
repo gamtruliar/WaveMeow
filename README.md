@@ -68,3 +68,13 @@ Each slider scored 0–10 by closeness to the hidden target. Average across thre
 
 純前端，零依賴。HTML5 + CSS3 + Vanilla JS + Web Audio API。  
 Pure front-end, zero dependencies. HTML5 + CSS3 + Vanilla JS + Web Audio API.
+
+---
+
+## 📸 Screenshots
+
+![Init Screen](res/sc1.png)
+![Listen Phase](res/sc2.png)
+![Tune Phase](res/sc3.png)
+![Round Score](res/sc4.png)
+![Final Results](res/sc5.png)

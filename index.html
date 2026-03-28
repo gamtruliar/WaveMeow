@@ -29,6 +29,12 @@
   <div class="title-wrap">
     <h1>Sonic Palette</h1>
     <div class="subtitle">meow edition</div>
+    <a class="game-url" href="https://gamtruliar.github.io/WaveMeow/" target="_blank">gamtruliar.github.io/WaveMeow</a>
+  </div>
+  <div class="lang-picker">
+    <button :class="{ active: lang === 'yue' }" @click="setLang('yue')">粵</button>
+    <button :class="{ active: lang === 'en' }"  @click="setLang('en')">EN</button>
+    <button :class="{ active: lang === 'ja' }"  @click="setLang('ja')">日</button>
   </div>
   <div class="sparkles"><span>✦</span><span>⋆</span><span>✦</span><span>⋆</span><span>✦</span></div>
 
@@ -40,7 +46,7 @@
       <div class="deco deco-bl">🎵</div><div class="deco deco-br">💜</div>
 
       <div style="text-align:center;margin-bottom:18px">
-        <div class="phase-title">Load Your Meow</div>
+        <div class="phase-title">{{ t('loadMeow') }}</div>
       </div>
 
       <div class="default-status" :style="{ color: defaultStatusOk ? '#9c5cd4' : '#b09ac0' }">
@@ -50,13 +56,13 @@
       <div class="upload-zone">
         <input type="file" accept="audio/*" @change="onFileInput($event)">
         <div class="upload-icon">🐱</div>
-        <div class="upload-label">Drag &amp; drop or <span>browse</span></div>
+        <div class="upload-label" v-html="t('uploadHint')"></div>
         <div class="file-name">{{ fileName }}</div>
       </div>
 
       <div style="margin-top:20px;text-align:center">
         <button class="btn btn-primary" :disabled="!audioReady" @click="startGame()">
-          Start Game 🎮
+          {{ t('startGame') }}
         </button>
       </div>
     </div>
@@ -73,8 +79,8 @@
       <div class="deco deco-bl">🎀</div><div class="deco deco-br">✨</div>
 
       <div style="text-align:center">
-        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
-        <div class="phase-title">Listen 🎧</div>
+        <div class="phase-label">{{ roundLabel(currentRound + 1) }}  {{ t('roundOf') }} 5</div>
+        <div class="phase-title">{{ t('listen') }}</div>
       </div>
 
       <div class="pulse-wrap">
@@ -103,8 +109,8 @@
       <div class="deco deco-bl">🩷</div><div class="deco deco-br">☁️</div>
 
       <div style="text-align:center">
-        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
-        <div class="phase-title">Tune It 🎛️</div>
+        <div class="phase-label">{{ roundLabel(currentRound + 1) }}  {{ t('roundOf') }} 5</div>
+        <div class="phase-title">{{ t('tuneIt') }}</div>
       </div>
 
       <div class="waveform" :class="{ playing: tuneWave }">
@@ -118,8 +124,8 @@
         <!-- Pitch -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name pitch-col">☁️ Pitch</span>
-            <span class="slider-hint">Base frequency / Detune</span>
+            <span class="slider-name pitch-col">☁️ {{ t('pitch') }}</span>
+            <span class="slider-hint">{{ t('pitchHint') }}</span>
           </div>
           <div class="slider-track-wrap">
             <input id="slider-pitch" type="range" class="kawaii-slider" min="0" max="1000" step="1"
@@ -131,8 +137,8 @@
         <!-- Vibrato -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name vibrato-col">🎵 Vibrato</span>
-            <span class="slider-hint">Trembling / Purr intensity</span>
+            <span class="slider-name vibrato-col">🎵 {{ t('vibrato') }}</span>
+            <span class="slider-hint">{{ t('vibratoHint') }}</span>
           </div>
           <div class="slider-track-wrap">
             <input id="slider-vibrato" type="range" class="kawaii-slider" min="0" max="1000" step="1"
@@ -144,8 +150,8 @@
         <!-- Inflection -->
         <div class="slider-row">
           <div class="slider-header">
-            <span class="slider-name inflection-col">🐾 Inflection</span>
-            <span class="slider-hint">Tail pitch slide ↗↘</span>
+            <span class="slider-name inflection-col">🐾 {{ t('inflection') }}</span>
+            <span class="slider-hint">{{ t('inflectionHint') }}</span>
           </div>
           <div class="slider-track-wrap">
             <input id="slider-inflection" type="range" class="kawaii-slider" min="0" max="1000" step="1"
@@ -157,7 +163,7 @@
       </div>
 
       <div style="text-align:center;margin-top:18px">
-        <button class="btn btn-primary" @click="confirmTune()">Confirm 😺</button>
+        <button class="btn btn-primary" @click="confirmTune()">{{ t('confirm') }}</button>
       </div>
     </div>
   </div>
@@ -173,27 +179,27 @@
       <div class="deco deco-bl">💖</div><div class="deco deco-br">🎀</div>
 
       <div style="text-align:center">
-        <div class="phase-label">Round {{ currentRound + 1 }} of 5</div>
-        <div class="phase-title">Round Score</div>
+        <div class="phase-label">{{ roundLabel(currentRound + 1) }}  {{ t('roundOf') }} 5</div>
+        <div class="phase-title">{{ t('roundScore') }}</div>
       </div>
 
       <div class="score-big" :class="{ animating: scoreAnimating }">{{ scoreDisplay }}</div>
-      <div class="score-subtext">round score</div>
+      <div class="score-subtext">{{ t('roundScoreSub') }}</div>
 
       <!-- Score bars -->
       <div class="score-bars">
         <div class="score-bar-row pitch-row">
-          <div class="score-bar-lbl">Pitch</div>
+          <div class="score-bar-lbl">{{ t('pitch') }}</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barPitch }"></div></div>
           <div class="score-bar-pct">{{ roundResult ? roundResult.pitch.toFixed(1) + '/10' : '--' }}</div>
         </div>
         <div class="score-bar-row vibrato-row">
-          <div class="score-bar-lbl">Vibrato</div>
+          <div class="score-bar-lbl">{{ t('vibrato') }}</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barVibrato }"></div></div>
           <div class="score-bar-pct">{{ roundResult ? roundResult.vibrato.toFixed(1) + '/10' : '--' }}</div>
         </div>
         <div class="score-bar-row inflection-row">
-          <div class="score-bar-lbl">Inflection</div>
+          <div class="score-bar-lbl">{{ t('inflection') }}</div>
           <div class="score-bar-track"><div class="score-bar-fill" :style="{ width: barInflection }"></div></div>
           <div class="score-bar-pct">{{ roundResult ? roundResult.inflection.toFixed(1) + '/10' : '--' }}</div>
         </div>
@@ -201,14 +207,28 @@
 
       <div class="divider" style="margin:16px 0"></div>
 
+      <!-- Wave comparison chart -->
+      <div class="wave-compare-wrap">
+        <div class="wave-compare-header">
+          <span class="wave-compare-title">{{ t('pitchContour') }}</span>
+          <div class="wave-compare-legend">
+            <span class="wl-target">● {{ t('target') }}</span>
+            <span class="wl-yours">● {{ t('yours') }}</span>
+          </div>
+        </div>
+        <canvas id="wave-compare-canvas"></canvas>
+      </div>
+
+      <div class="divider" style="margin:16px 0"></div>
+
       <!-- Compare sliders -->
-      <div class="compare-section-label">Visual Compare</div>
+      <div class="compare-section-label">{{ t('visualCompare') }}</div>
       <div class="compare-rows">
         <!-- Pitch compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name pitch-col">☁️ Pitch</span>
-            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
+            <span class="slider-name pitch-col">☁️ {{ t('pitch') }}</span>
+            <div class="compare-tags"><span class="compare-tag you">{{ t('you') }}</span><span class="compare-tag target">{{ t('target') }}</span></div>
           </div>
           <div class="compare-track-wrap">
             <input id="cmp-pitch" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpPitch" tabindex="-1">
@@ -219,8 +239,8 @@
         <!-- Vibrato compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name vibrato-col">🎵 Vibrato</span>
-            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
+            <span class="slider-name vibrato-col">🎵 {{ t('vibrato') }}</span>
+            <div class="compare-tags"><span class="compare-tag you">{{ t('you') }}</span><span class="compare-tag target">{{ t('target') }}</span></div>
           </div>
           <div class="compare-track-wrap">
             <input id="cmp-vibrato" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpVibrato" tabindex="-1">
@@ -231,8 +251,8 @@
         <!-- Inflection compare -->
         <div class="compare-row">
           <div class="compare-label">
-            <span class="slider-name inflection-col">🐾 Inflection</span>
-            <div class="compare-tags"><span class="compare-tag you">You</span><span class="compare-tag target">Target</span></div>
+            <span class="slider-name inflection-col">🐾 {{ t('inflection') }}</span>
+            <div class="compare-tags"><span class="compare-tag you">{{ t('you') }}</span><span class="compare-tag target">{{ t('target') }}</span></div>
           </div>
           <div class="compare-track-wrap">
             <input id="cmp-inflection" type="range" class="kawaii-slider" min="0" max="1000" step="1" :value="cmpInflection" tabindex="-1">
@@ -245,16 +265,16 @@
       <!-- Play buttons -->
       <div class="compare-play-row">
         <button class="btn btn-green" :class="{ playing: playingTarget }" :disabled="playDisabled" @click="playTarget()">
-          🎯 Play Target
+          {{ t('playTarget') }}
         </button>
         <button class="btn btn-alt" :class="{ playing: playingYours }" :disabled="playDisabled" @click="playYours()">
-          🐱 Play Yours
+          {{ t('playYours') }}
         </button>
       </div>
 
       <div style="text-align:center;margin-top:18px">
         <button :class="isLastRound ? 'btn btn-danger' : 'btn btn-primary'" @click="nextRound()">
-          {{ isLastRound ? 'View Final Results 🏆' : 'Next Round →' }}
+          {{ isLastRound ? t('viewFinal') : t('nextRound') }}
         </button>
       </div>
     </div>
@@ -268,7 +288,7 @@
       <div class="deco deco-bl">🎉</div><div class="deco deco-br">🐾</div>
 
       <div style="text-align:center;margin-bottom:10px">
-        <div class="phase-title">Final Results</div>
+        <div class="phase-title">{{ t('finalResults') }}</div>
       </div>
 
       <div class="final-score-wrap">
@@ -279,14 +299,17 @@
       <div class="divider" style="margin:14px 0"></div>
 
       <div class="history">
-        <div class="history-row" v-for="(r, i) in roundScores" :key="i">
-          <span class="hr-round">Round {{ i + 1 }}</span>
-          <span class="hr-val">{{ r.total.toFixed(2) }} / 10</span>
+        <div class="history-row-wrap" v-for="(r, i) in roundScores" :key="i">
+          <div class="history-row">
+            <span class="hr-round">{{ roundLabel(i + 1) }}</span>
+            <span class="hr-val">{{ r.total.toFixed(2) }} / 10</span>
+          </div>
+          <canvas :id="'final-contour-' + i" class="final-contour-canvas"></canvas>
         </div>
       </div>
 
       <div style="text-align:center;margin-top:18px">
-        <button class="btn btn-primary" @click="playAgain()">Play Again 🔄</button>
+        <button class="btn btn-primary" @click="playAgain()">{{ t('playAgain') }}</button>
       </div>
     </div>
   </div>
