@@ -181,18 +181,20 @@ h1 {
   line-height: 1.1; margin-bottom: 2px;
 }
 
-/* ── Upload ── */
+/* ── Upload (compact, secondary feel) ── */
 .upload-zone {
-  border: 2.5px dashed var(--card-border); border-radius: 16px; padding: 20px;
+  border: 1.5px dashed var(--card-border); border-radius: 12px; padding: 10px 14px;
   text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
   position: relative; background: var(--cream2);
+  display: flex; align-items: center; gap: 10px;
 }
 .upload-zone:hover { border-color: var(--accent); background: rgba(220,160,100,0.06); }
 .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.upload-icon { font-size: 1.9rem; margin-bottom: 6px; }
-.upload-label { font-size: 0.8rem; color: var(--muted); font-weight: 700; }
+.upload-icon { font-size: 1.2rem; flex-shrink: 0; }
+.upload-text-wrap { text-align: left; min-width: 0; }
+.upload-label { font-size: 0.72rem; color: var(--muted); font-weight: 700; }
 .upload-label span { color: var(--accent); }
-.file-name { font-size: 0.72rem; color: var(--accent); margin-top: 5px; min-height: 1.1em; font-weight: 700; }
+.file-name { font-size: 0.66rem; color: var(--accent); margin-top: 2px; min-height: 1em; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .default-status { font-size: 0.78rem; font-weight: 700; text-align: center; min-height: 1.3em; margin-bottom: 14px; }
 
 /* ── Buttons ── */

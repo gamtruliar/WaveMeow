@@ -56,8 +56,10 @@
       <div class="upload-zone">
         <input type="file" accept="audio/*" @change="onFileInput($event)">
         <div class="upload-icon">🐱</div>
-        <div class="upload-label" v-html="t('uploadHint')"></div>
-        <div class="file-name">{{ fileName }}</div>
+        <div class="upload-text-wrap">
+          <div class="upload-label" v-html="t('uploadHint')"></div>
+          <div class="file-name">{{ fileName }}</div>
+        </div>
       </div>
 
       <div style="margin-top:20px;text-align:center">
